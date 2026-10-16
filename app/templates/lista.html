@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+
+{% block title %}Treinos | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Meus treinos</h1>
+        <p class="text-secondary mb-0" id="contador">
+            {{ treinos|length }} treino{{ treinos|length|pluralize }} cadastrado{{ treinos|length|pluralize }}.
+        </p>
+    </div>
+
+    <a href="{% url 'criar_treino' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Novo treino
+    </a>
+</div>
+
+{% if treinos %}
+
+    <div class="position-relative mb-4" style="max-width: 460px;">
+        <label for="busca" class="visually-hidden">Buscar treinos</label>
+        <i class="bi bi-search position-absolute top-50 translate-middle-y text-secondary"
+           style="left: 14px;" aria-hidden="true"></i>
+        <input type="search" id="busca" class="form-control"
+               style="padding-left: 2.6rem;"
+               placeholder="Buscar por nome, objetivo ou nível"
+               autocomplete="off">
+    </div>
+
+    <div class="row g-4" id="grade-treinos">
+        {% for treino in treinos %}
+            <div class="col-md-6 col-xl-4"
+                 data-treino="{{ treino.nome }} {{ treino.objetivo|default_if_none:'' }} {{ treino.nivel|default_if_none:'' }}">
+                <article class="tcard">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="tile-icon"><i class="bi bi-activity"></i></span>
+                        <h2 class="tcard-title fw-bold">
+                            <a href="{% url 'detalhe_treino' treino.pk %}" class="stretched-link">{{ treino.nome }}</a>
+                        </h2>
+                    </div>
+
+                    {% if treino.objetivo %}
+                        <p class="mb-3">
+                            <i class="bi bi-bullseye text-primary me-2"></i>{{ treino.objetivo|truncatechars:90 }}
+                        </p>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% if treino.duracao %}
+                            <span class="pill"><i class="bi bi-clock"></i>{{ treino.duracao }} minutos</span>
+                        {% endif %}
+                        {% if treino.nivel %}
+                            <span class="pill pill-muted"><i class="bi bi-bar-chart"></i>{{ treino.nivel }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="tcard-actions d-flex flex-wrap gap-2 mt-auto">
+                        <a href="{% url 'detalhe_treino' treino.pk %}"
+                           class="btn btn-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>Detalhes
+                        </a>
+
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'editar_treino' treino.pk %}"
+                               class="btn btn-outline-secondary btn-sm">
+                                <i class="bi bi-pencil me-1"></i>Editar
+                            </a>
+
+                            <a href="{% url 'excluir_treino' treino.pk %}"
+                               class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i>Excluir
+                            </a>
+                        {% endif %}
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="card p-5 text-center" id="busca-vazia" hidden>
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-search"></i></span>
+        <h2 class="h5 fw-bold">Nenhum treino corresponde à busca</h2>
+        <p class="text-secondary mb-0">Tente outro nome, objetivo ou nível.</p>
+    </div>
+
+{% else %}
+    <div class="card p-5 text-center">
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-inbox"></i></span>
+        <h2 class="h4 fw-bold">Nenhum treino cadastrado</h2>
+        <p class="text-secondary mx-auto" style="max-width: 36ch;">
+            Cadastre seu primeiro treino para começar.
+        </p>
+        <div>
+            <a href="{% url 'criar_treino' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-2"></i>Cadastrar treino
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var input = document.getElementById('busca');
+        if (!input) return;
+
+        var itens = Array.prototype.slice.call(document.querySelectorAll('[data-treino]'));
+        var vazio = document.getElementById('busca-vazia');
+        var contador = document.getElementById('contador');
+        var textoOriginal = contador.textContent;
+
+        function normalizar(texto) {
+            return texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        }
+
+        input.addEventListener('input', function () {
+            var termo = normalizar(input.value.trim());
+            var visiveis = 0;
+
+            itens.forEach(function (item) {
+                var corresponde = !termo || normalizar(item.getAttribute('data-treino')).indexOf(termo) !== -1;
+                item.hidden = !corresponde;
+                if (corresponde) visiveis++;
+            });
+
+            vazio.hidden = visiveis !== 0;
+
+            if (termo) {
+                contador.textContent = visiveis + (visiveis === 1 ? ' resultado' : ' resultados') + '.';
+            } else {
+                contador.textContent = textoOriginal;
+            }
+        });
+    })();
+</script>
+{% endblock %}

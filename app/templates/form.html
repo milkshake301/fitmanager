@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if form.instance.pk %}Editar treino{% else %}Novo treino{% endif %} | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+
+        <a href="{% url 'lista_treinos' %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>Voltar aos treinos
+        </a>
+
+        <div class="card p-4 p-md-5">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="tile-icon">
+                    <i class="bi {% if form.instance.pk %}bi-pencil-square{% else %}bi-clipboard2-plus{% endif %}"></i>
+                </span>
+                <div>
+                    <h1 class="h3 fw-bold mb-1">
+                        {% if form.instance.pk %}Editar treino{% else %}Novo treino{% endif %}
+                    </h1>
+                    <p class="text-secondary mb-0">Preencha as informações do treino abaixo.</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        <div class="{% if field.name == 'duracao' or field.name == 'nivel' %}col-md-6{% else %}col-12{% endif %}">
+                            <div class="field-control{% if field.errors %} field-error{% endif %}">
+                                <label for="{{ field.id_for_label }}" class="form-label">
+                                    {{ field.label }}
+                                </label>
+
+                                {{ field }}
+
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text }}</div>
+                                {% endif %}
+
+                                {% for error in field.errors %}
+                                    <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 mt-4 pt-4 border-top">
+                    <a href="{% url 'lista_treinos' %}" class="btn btn-outline-secondary">
+                        Cancelar
+                    </a>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Salvar treino
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

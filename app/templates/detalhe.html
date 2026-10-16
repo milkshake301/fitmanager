@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ treino.nome }} | FitManager{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-hero {
+        color: #fff;
+        border-radius: 24px;
+        padding: clamp(1.5rem, 4vw, 2.75rem);
+        background:
+            radial-gradient(circle at 92% 0%, rgba(255, 255, 255, .16), transparent 45%),
+            linear-gradient(135deg, #2748F5 0%, #1A2FA8 100%);
+        box-shadow: var(--shadow-lg);
+    }
+    .detail-hero h1 {
+        color: #fff;
+        font-size: clamp(2rem, 4.4vw, 3rem);
+        font-weight: 800;
+        line-height: 1.05;
+        overflow-wrap: anywhere;
+    }
+    .detail-hero .lead { color: rgba(255, 255, 255, .85); max-width: 52ch; }
+    .detail-hero .pill { background: rgba(255, 255, 255, .16); color: #fff; }
+
+    .fact {
+        display: flex;
+        align-items: center;
+        gap: .9rem;
+        padding: .95rem 0;
+    }
+    .fact + .fact { border-top: 1px solid var(--line); }
+    .fact small { display: block; color: var(--muted); }
+    .fact strong { display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'lista_treinos' %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>Voltar aos treinos
+</a>
+
+<section class="detail-hero mb-4">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        {% if treino.duracao %}
+            <span class="pill"><i class="bi bi-clock"></i>{{ treino.duracao }} minutos</span>
+        {% endif %}
+        {% if treino.nivel %}
+            <span class="pill"><i class="bi bi-bar-chart"></i>{{ treino.nivel }}</span>
+        {% endif %}
+    </div>
+
+    <h1>{{ treino.nome }}</h1>
+
+    {% if treino.objetivo %}
+        <p class="lead mt-3 mb-0">{{ treino.objetivo }}</p>
+    {% endif %}
+</section>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 p-md-5 h-100">
+            <h2 class="h4 fw-bold mb-3">Descrição</h2>
+
+            {% if treino.descricao %}
+                <p class="mb-0" style="white-space: pre-line; max-width: 68ch; line-height: 1.7;">{{ treino.descricao }}</p>
+            {% else %}
+                <p class="text-secondary mb-3">Este treino ainda não tem descrição.</p>
+                {% if user.is_authenticated %}
+                    <div>
+                        <a href="{% url 'editar_treino' treino.pk %}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-pencil me-2"></i>Adicionar descrição
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-4 mb-4">
+            <h2 class="h5 fw-bold mb-2">Informações</h2>
+
+            {% if treino.objetivo %}
+                <div class="fact">
+                    <span class="tile-icon"><i class="bi bi-bullseye"></i></span>
+                    <div>
+                        <small>Objetivo</small>
+                        <strong>{{ treino.objetivo }}</strong>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if treino.duracao %}
+                <div class="fact">
+                    <span class="tile-icon"><i class="bi bi-clock"></i></span>
+                    <div>
+                        <small>Duração</small>
+                        <strong>{{ treino.duracao }} minutos</strong>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if treino.nivel %}
+                <div class="fact">
+                    <span class="tile-icon"><i class="bi bi-bar-chart"></i></span>
+                    <div>
+                        <small>Nível</small>
+                        <strong>{{ treino.nivel }}</strong>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if not treino.objetivo and not treino.duracao and not treino.nivel %}
+                <p class="text-secondary mb-0 mt-2">Nenhuma informação adicional cadastrada.</p>
+            {% endif %}
+        </div>
+
+        {% if user.is_authenticated %}
+            <div class="card p-4">
+                <h2 class="h5 fw-bold mb-3">Ações</h2>
+
+                <div class="d-grid gap-2">
+                    <a href="{% url 'editar_treino' treino.pk %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar treino
+                    </a>
+
+                    <a href="{% url 'excluir_treino' treino.pk %}" class="btn btn-outline-danger">
+                        <i class="bi bi-trash me-2"></i>Excluir treino
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

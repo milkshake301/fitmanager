@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}Criar conta | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="auth-wrap">
+    <div class="auth-shell">
+
+        <aside class="auth-aside d-none d-lg-flex">
+            <div>
+                <h2>Comece a organizar seus treinos.</h2>
+                <p class="fs-5 mt-3 mb-0">
+                    Crie sua conta e cadastre o primeiro treino em poucos minutos.
+                </p>
+            </div>
+
+            <ul class="auth-points">
+                <li>
+                    <i class="bi bi-person-check"></i>
+                    <span>Escolha um usuário e uma senha para acessar.</span>
+                </li>
+                <li>
+                    <i class="bi bi-clipboard2-plus"></i>
+                    <span>Cadastre treinos com objetivo, duração e nível.</span>
+                </li>
+                <li>
+                    <i class="bi bi-phone"></i>
+                    <span>Consulte tudo pelo celular ou pelo computador.</span>
+                </li>
+            </ul>
+        </aside>
+
+        <section class="auth-main">
+            <h1 class="h2 fw-bold mb-1">Crie sua conta</h1>
+            <p class="text-secondary mb-4">Preencha os dados abaixo para começar.</p>
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
+
+                {% for field in form.visible_fields %}
+                    <div class="mb-3 field-control{% if field.errors %} field-error{% endif %}">
+
+                        <label for="{{ field.id_for_label }}" class="form-label">
+                            {{ field.label }}
+                        </label>
+
+                        {{ field }}
+
+                        {% if field.help_text %}
+                            <div class="form-text">
+                                {{ field.help_text|safe }}
+                            </div>
+                        {% endif %}
+
+                        {% for error in field.errors %}
+                            <div class="text-danger small mt-1" role="alert">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
+                    Criar conta
+                </button>
+            </form>
+
+            <p class="text-center text-secondary mt-4 mb-0">
+                Já tem uma conta?
+                <a href="{% url 'login' %}" class="fw-semibold text-decoration-none">
+                    Entrar
+                </a>
+            </p>
+        </section>
+
+    </div>
+</div>
+
+{% endblock %}

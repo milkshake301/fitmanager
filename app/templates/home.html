@@ -1,136 +1,337 @@
 {% extends 'base.html' %}
 
-{% block title %}Início | FitManager{% endblock %}
+{% block title %}FitManager | Organize seus treinos{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        position: relative;
+        overflow: hidden;
+        color: #fff;
+        padding: clamp(1.75rem, 5vw, 4rem);
+        border-radius: 28px;
+        background:
+            radial-gradient(circle at 92% 8%, rgba(255, 255, 255, .16), transparent 42%),
+            linear-gradient(135deg, #2748F5 0%, #1A2FA8 100%);
+        box-shadow: var(--shadow-lg);
+    }
+    .hero h1 {
+        color: #fff;
+        font-size: clamp(2.4rem, 5.4vw, 4.1rem);
+        font-weight: 800;
+        line-height: 1.02;
+        max-width: 16ch;
+    }
+    .hero-lead {
+        color: rgba(255, 255, 255, .84);
+        font-size: 1.15rem;
+        max-width: 46ch;
+    }
+    .hero .btn-light { color: var(--brand-700); font-weight: 700; }
+    .btn-ghost {
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, .45);
+        background: transparent;
+    }
+    .btn-ghost:hover { color: #fff; background: rgba(255, 255, 255, .14); border-color: #fff; }
+
+    /* Prévia do produto: um treino de exemplo montado com os mesmos campos do sistema */
+    .preview { position: relative; min-height: 340px; }
+    .preview-card {
+        position: absolute;
+        background: #fff;
+        color: var(--ink);
+        border-radius: 20px;
+        padding: 1.4rem;
+        box-shadow: 0 30px 60px -22px rgba(6, 14, 60, .6);
+    }
+    .preview-back {
+        top: 0;
+        right: 0;
+        width: 80%;
+        transform: rotate(3.5deg);
+        opacity: .72;
+    }
+    .preview-front {
+        bottom: 0;
+        left: 0;
+        width: 90%;
+        animation: rise .7s .1s both cubic-bezier(.2, .7, .2, 1);
+    }
+    .preview-notes {
+        background: var(--canvas);
+        border-radius: 12px;
+        padding: .9rem 1rem;
+        font-size: .92rem;
+        color: var(--muted);
+        white-space: pre-line;
+    }
+    @keyframes rise {
+        from { opacity: 0; transform: translateY(18px); }
+        to   { opacity: 1; transform: none; }
+    }
+
+    .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; }
+    .section-gap { margin-top: clamp(3rem, 6vw, 5rem); }
+
+    .feature-main {
+        background: var(--brand-50);
+        border: 1px solid var(--brand-100);
+        border-radius: 22px;
+        padding: clamp(1.5rem, 3vw, 2.25rem);
+        height: 100%;
+    }
+    .feature-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        padding: 1.6rem;
+        height: 100%;
+    }
+
+    .step-num {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 2.6rem;
+        line-height: 1;
+        color: var(--brand);
+    }
+
+    .cta-band {
+        background: var(--ink);
+        color: #fff;
+        border-radius: 28px;
+        padding: clamp(1.75rem, 4vw, 3.25rem);
+    }
+    .cta-band h2 { color: #fff; font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 800; }
+    .cta-band p { color: #B8C2DA; }
+</style>
+{% endblock %}
 
 {% block content %}
 
-<div class="p-4 p-md-5 mb-4 bg-white rounded-4 shadow-sm">
-    <div class="row align-items-center">
-        <div class="col-lg-8">
-            <span class="badge text-bg-primary mb-3">GESTÃO FITNESS</span>
+<!-- Hero -->
+<section class="hero">
+    <div class="row align-items-center g-5">
+        <div class="col-lg-7">
+            <h1>Seus treinos, organizados em um só lugar.</h1>
 
-            <h1 class="display-5 fw-bold">
-                Organize seus treinos.
-            </h1>
-
-            <p class="text-secondary fs-5 mt-3">
-                Gerencie seus treinos, acompanhe seus objetivos
-                e mantenha sua rotina organizada em um só lugar.
+            <p class="hero-lead mt-4">
+                Cadastre cada treino com objetivo, duração e nível e consulte tudo
+                de qualquer dispositivo, sem planilhas nem anotações soltas.
             </p>
 
-            <a href="{% url 'lista_treinos' %}" class="btn btn-primary mt-2">
-                <i class="bi bi-list-check me-2"></i>Ver treinos
-            </a>
-
-            <a href="{% url 'criar_treino' %}"
-               class="btn btn-outline-primary mt-2">
-                <i class="bi bi-plus-circle me-2"></i>Novo treino
-            </a>
-        </div>
-
-        <div class="col-lg-4 text-center mt-4 mt-lg-0">
-            <i class="bi bi-bar-chart-line text-primary"
-               style="font-size: 110px;"></i>
-        </div>
-    </div>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-6 col-lg-4">
-        <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="text-secondary mb-2">Treinos cadastrados</p>
-                    <h2 class="fw-bold mb-0">
-                        {{ treinos.count|default:0 }}
-                    </h2>
-                </div>
-                <i class="bi bi-clipboard-check text-primary fs-1"></i>
+            <div class="d-flex flex-wrap gap-2 mt-4">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'criar_treino' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-plus-lg me-2"></i>Novo treino
+                    </a>
+                    <a href="{% url 'lista_treinos' %}" class="btn btn-ghost btn-lg">
+                        Ver meus treinos
+                    </a>
+                {% else %}
+                    <a href="{% url 'cadastro' %}" class="btn btn-light btn-lg">
+                        Criar conta
+                    </a>
+                    <a href="{% url 'login' %}" class="btn btn-ghost btn-lg">
+                        Já tenho conta
+                    </a>
+                {% endif %}
             </div>
         </div>
-    </div>
 
-    <div class="col-md-6 col-lg-4">
-        <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="text-secondary mb-2">Sua plataforma</p>
-                    <h4 class="fw-bold mb-0">FitManager</h4>
-                    <small class="text-secondary">Gestão de treinos</small>
+        <div class="col-lg-5 d-none d-md-block">
+            <div class="preview" aria-hidden="true">
+                <div class="preview-card preview-back">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="tile-icon"><i class="bi bi-lightning-charge"></i></span>
+                        <strong>Pernas e glúteos</strong>
+                    </div>
                 </div>
-                <i class="bi bi-heart-pulse text-danger fs-1"></i>
-            </div>
-        </div>
-    </div>
 
-    <div class="col-md-6 col-lg-4">
-        <div class="card p-4 h-100">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <p class="text-secondary mb-2">Organização</p>
-                    <h4 class="fw-bold mb-0">Em um só lugar</h4>
-                    <small class="text-secondary">Seus treinos</small>
-                </div>
-                <i class="bi bi-calendar-check text-success fs-1"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-        <h3 class="fw-bold mb-1">Treinos recentes</h3>
-        <p class="text-secondary mb-0">Confira os últimos treinos cadastrados.</p>
-    </div>
-
-    <a href="{% url 'lista_treinos' %}" class="text-decoration-none">
-        Ver todos <i class="bi bi-arrow-right"></i>
-    </a>
-</div>
-
-{% if treinos %}
-    <div class="row g-3">
-        {% for treino in treinos %}
-            <div class="col-md-6 col-lg-4">
-                <div class="card p-4 h-100">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
-                            <i class="bi bi-lightning-charge fs-4"></i>
+                <div class="preview-card preview-front">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="tile-icon"><i class="bi bi-activity"></i></span>
+                        <div>
+                            <div class="fw-bold fs-5">Peito e tríceps</div>
+                            <small class="text-secondary">Exemplo de treino</small>
                         </div>
-                        <h5 class="fw-bold mb-0">{{ treino.nome }}</h5>
                     </div>
 
-                    {% if treino.objetivo %}
-                        <p class="text-secondary">
-                            {{ treino.objetivo }}
-                        </p>
-                    {% endif %}
+                    <p class="mb-2"><strong>Objetivo:</strong> Hipertrofia</p>
 
-                    <a href="{% url 'detalhe_treino' treino.pk %}"
-                       class="btn btn-outline-primary mt-auto">
-                        Ver detalhes
-                    </a>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        <span class="pill"><i class="bi bi-clock"></i>50 minutos</span>
+                        <span class="pill pill-muted"><i class="bi bi-bar-chart"></i>Intermediário</span>
+                    </div>
+
+                    <div class="preview-notes">Supino reto: 4 x 10
+Supino inclinado: 3 x 12
+Tríceps na corda: 3 x 15</div>
                 </div>
             </div>
-        {% endfor %}
-    </div>
-{% else %}
-    <div class="card p-5 text-center">
-        <i class="bi bi-clipboard2-plus text-primary"
-           style="font-size: 50px;"></i>
-
-        <h5 class="fw-bold mt-3">Nenhum treino cadastrado</h5>
-
-        <p class="text-secondary">
-            Comece adicionando seu primeiro treino ao FitManager.
-        </p>
-
-        <div>
-            <a href="{% url 'criar_treino' %}" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-2"></i>Cadastrar primeiro treino
-            </a>
         </div>
     </div>
+</section>
+
+{% if not user.is_authenticated %}
+<!-- Funcionalidades -->
+<section class="section-gap">
+    <div class="mb-4" style="max-width: 36rem;">
+        <h2 class="section-title">Tudo para manter a rotina em dia</h2>
+        <p class="text-secondary fs-5 mb-0">
+            Do cadastro à consulta, cada etapa leva poucos cliques.
+        </p>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-7">
+            <div class="feature-main">
+                <span class="tile-icon mb-3"><i class="bi bi-clipboard2-check"></i></span>
+                <h3 class="h4 fw-bold">Cada treino com o que importa</h3>
+                <p class="text-secondary" style="max-width: 44ch;">
+                    Registre objetivo, duração e nível. Use a descrição livre para anotar
+                    séries, repetições e observações.
+                </p>
+                <div class="d-flex flex-wrap gap-2 mt-4">
+                    <span class="pill"><i class="bi bi-bullseye"></i>Objetivo</span>
+                    <span class="pill"><i class="bi bi-clock"></i>Duração</span>
+                    <span class="pill"><i class="bi bi-bar-chart"></i>Nível</span>
+                    <span class="pill"><i class="bi bi-card-text"></i>Descrição</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="d-flex flex-column gap-3 h-100">
+                <div class="feature-card flex-fill">
+                    <span class="tile-icon mb-3"><i class="bi bi-search"></i></span>
+                    <h3 class="h5 fw-bold">Encontre na hora</h3>
+                    <p class="text-secondary mb-0">
+                        Busque por nome, objetivo ou nível e filtre a lista enquanto digita.
+                    </p>
+                </div>
+
+                <div class="feature-card flex-fill">
+                    <span class="tile-icon mb-3"><i class="bi bi-pencil-square"></i></span>
+                    <h3 class="h5 fw-bold">Ajuste quando precisar</h3>
+                    <p class="text-secondary mb-0">
+                        Edite um treino ou exclua o que não usa mais, com confirmação antes de apagar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Como funciona -->
+<section class="section-gap">
+    <h2 class="section-title mb-4">Como funciona</h2>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="step-num">1</div>
+            <h3 class="h5 fw-bold mt-3">Crie sua conta</h3>
+            <p class="text-secondary mb-0">Escolha um usuário e uma senha para acessar o FitManager.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="step-num">2</div>
+            <h3 class="h5 fw-bold mt-3">Cadastre seus treinos</h3>
+            <p class="text-secondary mb-0">Informe nome, objetivo, duração, nível e as anotações do treino.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="step-num">3</div>
+            <h3 class="h5 fw-bold mt-3">Consulte e ajuste</h3>
+            <p class="text-secondary mb-0">Abra os detalhes ou edite quando a sua rotina mudar.</p>
+        </div>
+    </div>
+</section>
 {% endif %}
+
+<!-- Treinos recentes -->
+<section class="section-gap">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <h2 class="section-title mb-1">Treinos recentes</h2>
+            <p class="text-secondary mb-0">
+                {{ total_treinos|default:0 }} treino{{ total_treinos|pluralize }} cadastrado{{ total_treinos|pluralize }}.
+            </p>
+        </div>
+
+        <a href="{% url 'lista_treinos' %}" class="btn btn-outline-secondary btn-sm">
+            Ver todos os treinos
+        </a>
+    </div>
+
+    {% if treinos %}
+        <div class="row g-3">
+            {% for treino in treinos %}
+                <div class="col-md-6 col-lg-4">
+                    <article class="tcard">
+                        <div class="d-flex align-items-center gap-3 mb-3">
+                            <span class="tile-icon"><i class="bi bi-lightning-charge"></i></span>
+                            <h3 class="tcard-title fw-bold">
+                                <a href="{% url 'detalhe_treino' treino.pk %}" class="stretched-link">{{ treino.nome }}</a>
+                            </h3>
+                        </div>
+
+                        {% if treino.objetivo %}
+                            <p class="text-secondary mb-3">{{ treino.objetivo|truncatechars:90 }}</p>
+                        {% endif %}
+
+                        <div class="d-flex flex-wrap gap-2 mt-auto">
+                            {% if treino.duracao %}
+                                <span class="pill"><i class="bi bi-clock"></i>{{ treino.duracao }} min</span>
+                            {% endif %}
+                            {% if treino.nivel %}
+                                <span class="pill pill-muted"><i class="bi bi-bar-chart"></i>{{ treino.nivel }}</span>
+                            {% endif %}
+                        </div>
+                    </article>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="card p-5 text-center">
+            <span class="tile-icon mx-auto mb-3"><i class="bi bi-clipboard2-plus"></i></span>
+            <h3 class="h5 fw-bold">Nenhum treino cadastrado</h3>
+            <p class="text-secondary mx-auto" style="max-width: 36ch;">
+                Cadastre o primeiro treino para vê-lo aqui.
+            </p>
+            <div>
+                <a href="{% url 'criar_treino' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-2"></i>Cadastrar primeiro treino
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<!-- CTA final -->
+<section class="section-gap">
+    <div class="cta-band">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <h2>{% if user.is_authenticated %}Tem um treino novo na cabeça?{% else %}Comece a organizar seus treinos hoje.{% endif %}</h2>
+                <p class="mb-0 fs-5">
+                    {% if user.is_authenticated %}
+                        Cadastre agora e deixe tudo à mão na próxima sessão.
+                    {% else %}
+                        Crie sua conta e cadastre o primeiro treino em poucos minutos.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'criar_treino' %}" class="btn btn-light btn-lg fw-bold">
+                        <i class="bi bi-plus-lg me-2"></i>Novo treino
+                    </a>
+                {% else %}
+                    <a href="{% url 'cadastro' %}" class="btn btn-light btn-lg fw-bold">Criar conta</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}

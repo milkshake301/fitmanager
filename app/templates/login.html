@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}Entrar | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="auth-wrap">
+    <div class="auth-shell">
+
+        <aside class="auth-aside d-none d-lg-flex">
+            <div>
+                <h2>Bem-vindo de volta.</h2>
+                <p class="fs-5 mt-3 mb-0">
+                    Seus treinos estão esperando por você.
+                </p>
+            </div>
+
+            <ul class="auth-points">
+                <li>
+                    <i class="bi bi-clipboard2-check"></i>
+                    <span>Consulte objetivo, duração e nível de cada treino.</span>
+                </li>
+                <li>
+                    <i class="bi bi-search"></i>
+                    <span>Encontre qualquer treino pela busca da lista.</span>
+                </li>
+                <li>
+                    <i class="bi bi-pencil-square"></i>
+                    <span>Ajuste sua rotina quando precisar.</span>
+                </li>
+            </ul>
+        </aside>
+
+        <section class="auth-main">
+            <h1 class="h2 fw-bold mb-1">Entrar</h1>
+            <p class="text-secondary mb-4">Acesse sua conta do FitManager.</p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.errors %}
+                    <div class="alert alert-danger" role="alert">
+                        Usuário ou senha incorretos. Confira os dados e tente novamente.
+                    </div>
+                {% endif %}
+
+                {% if next %}
+                    <input type="hidden" name="next" value="{{ next }}">
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="{{ form.username.id_for_label }}" class="form-label">
+                        Usuário
+                    </label>
+
+                    <input type="text"
+                           name="{{ form.username.html_name }}"
+                           id="{{ form.username.id_for_label }}"
+                           class="form-control"
+                           placeholder="Digite seu usuário"
+                           autocomplete="username"
+                           autofocus
+                           required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="{{ form.password.id_for_label }}" class="form-label">
+                        Senha
+                    </label>
+
+                    <div class="position-relative">
+                        <input type="password"
+                               name="{{ form.password.html_name }}"
+                               id="{{ form.password.id_for_label }}"
+                               class="form-control"
+                               style="padding-right: 3rem;"
+                               placeholder="Digite sua senha"
+                               autocomplete="current-password"
+                               required>
+
+                        <button type="button" id="alternar-senha"
+                                class="btn btn-link position-absolute top-50 end-0 translate-middle-y text-secondary px-3"
+                                aria-label="Mostrar senha" aria-pressed="false">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100">
+                    Entrar
+                </button>
+            </form>
+
+            <p class="text-center text-secondary mt-4 mb-0">
+                Ainda não tem conta?
+                <a href="{% url 'cadastro' %}" class="fw-semibold text-decoration-none">
+                    Criar conta
+                </a>
+            </p>
+        </section>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var botao = document.getElementById('alternar-senha');
+        var campo = document.getElementById('{{ form.password.id_for_label }}');
+        if (!botao || !campo) return;
+
+        botao.addEventListener('click', function () {
+            var visivel = campo.type === 'text';
+            campo.type = visivel ? 'password' : 'text';
+            botao.setAttribute('aria-pressed', visivel ? 'false' : 'true');
+            botao.setAttribute('aria-label', visivel ? 'Mostrar senha' : 'Ocultar senha');
+            botao.firstElementChild.className = visivel ? 'bi bi-eye' : 'bi bi-eye-slash';
+        });
+    })();
+</script>
+{% endblock %}

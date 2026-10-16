@@ -3,87 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2748F5">
+    <meta name="description" content="{% block meta_description %}FitManager: cadastre, organize e consulte seus treinos em um só lugar.{% endblock %}">
     <title>{% block title %}FitManager{% endblock %}</title>
 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232748F5'/%3E%3Cpath d='M6 17h4l3-8 5 14 3-6h5' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
     <style>
+        /* ==========================================================
+           Design tokens
+           ========================================================== */
         :root {
-            --primary: #4361ee;
-            --dark: #172033;
-            --background: #f5f7fb;
+            --ink: #0F1B3D;
+            --brand: #2748F5;
+            --brand-600: #1E39C9;
+            --brand-700: #162CA3;
+            --brand-200: #B9C6FF;
+            --brand-100: #DCE3FF;
+            --brand-50: #EEF1FF;
+            --signal: #FF5A1F;
+            --canvas: #F5F6FA;
+            --line: #E3E6EF;
+            --muted: #5B6578;
+            --shadow-sm: 0 1px 2px rgba(15, 27, 61, .06);
+            --shadow-lg: 0 24px 48px -24px rgba(15, 27, 61, .28);
+            --font-display: 'Bricolage Grotesque', 'DM Sans', system-ui, sans-serif;
+
+            /* Bootstrap 5.3 variable overrides */
+            --bs-primary: #2748F5;
+            --bs-primary-rgb: 39, 72, 245;
+            --bs-link-color: #2748F5;
+            --bs-link-color-rgb: 39, 72, 245;
+            --bs-link-hover-color: #1E39C9;
+            --bs-link-hover-color-rgb: 30, 57, 201;
+            --bs-body-font-family: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            --bs-body-color: #0F1B3D;
+            --bs-body-bg: #F5F6FA;
+            --bs-border-color: #E3E6EF;
         }
 
+        /* ==========================================================
+           Base
+           ========================================================== */
         body {
-            background: var(--background);
-            color: #202b3c;
-            font-family: Arial, sans-serif;
+            background: var(--canvas);
+            color: var(--ink);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
+            -webkit-font-smoothing: antialiased;
         }
 
-        .navbar {
-            background: var(--dark);
+        h1, h2, h3, h4, h5, .h1, .h2, .h3, .h4, .h5 {
+            font-family: var(--font-display);
+            letter-spacing: -.02em;
+            color: var(--ink);
         }
 
-        .navbar-brand {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: white !important;
+        .text-secondary { color: var(--muted) !important; }
+
+        :focus-visible {
+            outline: 3px solid rgba(39, 72, 245, .45);
+            outline-offset: 2px;
         }
 
-        .navbar .nav-link {
-            color: #d5dced;
+        .skip-link {
+            position: absolute;
+            left: 1rem;
+            top: -4rem;
+            z-index: 2000;
+            background: var(--ink);
+            color: #fff;
+            padding: .6rem 1rem;
+            border-radius: 8px;
         }
-
-        .navbar .nav-link:hover {
-            color: white;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-primary:hover {
-            background: #304bd0;
-            border-color: #304bd0;
-        }
+        .skip-link:focus { top: 1rem; color: #fff; }
 
         .main-content {
             flex: 1;
-            padding-top: 35px;
-            padding-bottom: 45px;
+            padding-top: 2rem;
+            padding-bottom: 3.5rem;
         }
 
-        .card {
-            border: 0;
-            border-radius: 16px;
-            box-shadow: 0 5px 20px rgba(20, 35, 70, 0.06);
+        /* ==========================================================
+           Header
+           ========================================================== */
+        .site-header {
+            background: rgba(255, 255, 255, .88);
+            -webkit-backdrop-filter: saturate(180%) blur(12px);
+            backdrop-filter: saturate(180%) blur(12px);
+            border-bottom: 1px solid var(--line);
         }
 
-        .form-control, .form-select {
-            padding: 11px 13px;
-            border-radius: 9px;
+        .navbar { padding-top: .7rem; padding-bottom: .7rem; }
+
+        .navbar-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: .6rem;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 1.35rem;
+            letter-spacing: -.02em;
+            color: var(--ink);
+        }
+        .navbar-brand:hover { color: var(--ink); }
+
+        .brand-mark {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: var(--brand);
+            color: #fff;
+            display: inline-grid;
+            place-items: center;
+            font-size: 1.1rem;
+            flex: none;
         }
 
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.15);
+        .navbar .nav-link {
+            color: var(--muted);
+            font-weight: 500;
+            padding: .5rem .9rem;
+            border-radius: 8px;
+        }
+        .navbar .nav-link:hover { color: var(--ink); background: var(--canvas); }
+        .navbar .nav-link.active { color: var(--brand); background: var(--brand-50); }
+
+        .user-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: .55rem;
+            font-weight: 600;
+            color: var(--ink);
+        }
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--brand-50);
+            color: var(--brand-700);
+            display: inline-grid;
+            place-items: center;
+            font-size: .85rem;
+            font-weight: 700;
         }
 
+        /* ==========================================================
+           Buttons
+           ========================================================== */
         .btn {
-            border-radius: 9px;
-            padding: 10px 16px;
+            --bs-btn-border-radius: 10px;
+            --bs-btn-padding-x: 1.15rem;
+            --bs-btn-padding-y: .62rem;
+            font-weight: 600;
+        }
+        .btn-sm {
+            --bs-btn-padding-x: .85rem;
+            --bs-btn-padding-y: .42rem;
+            --bs-btn-font-size: .875rem;
+        }
+        .btn-lg {
+            --bs-btn-padding-x: 1.5rem;
+            --bs-btn-padding-y: .8rem;
+            --bs-btn-font-size: 1rem;
+        }
+        .btn-primary {
+            --bs-btn-bg: var(--brand);
+            --bs-btn-border-color: var(--brand);
+            --bs-btn-hover-bg: var(--brand-600);
+            --bs-btn-hover-border-color: var(--brand-600);
+            --bs-btn-active-bg: var(--brand-700);
+            --bs-btn-active-border-color: var(--brand-700);
+            --bs-btn-disabled-bg: var(--brand);
+            --bs-btn-disabled-border-color: var(--brand);
+        }
+        .btn-outline-primary {
+            --bs-btn-color: var(--brand);
+            --bs-btn-border-color: var(--brand-200);
+            --bs-btn-hover-bg: var(--brand);
+            --bs-btn-hover-border-color: var(--brand);
+            --bs-btn-active-bg: var(--brand-600);
+            --bs-btn-active-border-color: var(--brand-600);
+        }
+        .btn-outline-secondary {
+            --bs-btn-color: var(--ink);
+            --bs-btn-border-color: var(--line);
+            --bs-btn-hover-bg: var(--canvas);
+            --bs-btn-hover-color: var(--ink);
+            --bs-btn-hover-border-color: #cfd4e2;
+            --bs-btn-active-bg: var(--line);
+            --bs-btn-active-color: var(--ink);
+            --bs-btn-active-border-color: #cfd4e2;
+            background: #fff;
+        }
+        .btn-outline-danger { background: #fff; }
+
+        /* ==========================================================
+           Cards, pills, forms
+           ========================================================== */
+        .card {
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            background: #fff;
         }
 
+        .alert {
+            border: 0;
+            border-radius: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: .4rem;
+            padding: .3rem .7rem;
+            border-radius: 999px;
+            background: var(--brand-50);
+            color: var(--brand-700);
+            font-size: .85rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+        .pill-muted { background: #EEF0F6; color: var(--muted); }
+
+        .tile-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--brand-50);
+            color: var(--brand);
+            display: inline-grid;
+            place-items: center;
+            font-size: 1.25rem;
+            flex: none;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: .5rem;
+            color: var(--muted);
+            font-weight: 500;
+            text-decoration: none;
+            margin-bottom: 1.25rem;
+        }
+        .back-link:hover { color: var(--brand); }
+
+        .page-head {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-bottom: 1.75rem;
+        }
+        @media (min-width: 768px) {
+            .page-head {
+                flex-direction: row;
+                align-items: flex-end;
+                justify-content: space-between;
+            }
+        }
+
+        .form-control, .form-select,
+        .field-control input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]),
+        .field-control select,
+        .field-control textarea {
+            display: block;
+            width: 100%;
+            padding: .72rem .95rem;
+            border: 1px solid #D5DAE6;
+            border-radius: 10px;
+            background: #fff;
+            color: var(--ink);
+            font: inherit;
+            transition: border-color .15s ease, box-shadow .15s ease;
+        }
+        .field-control textarea { min-height: 140px; resize: vertical; }
+        .form-control:focus, .form-select:focus,
+        .field-control input:focus,
+        .field-control select:focus,
+        .field-control textarea:focus {
+            border-color: var(--brand);
+            box-shadow: 0 0 0 .22rem rgba(39, 72, 245, .16);
+            outline: 0;
+        }
+        .field-error input, .field-error select, .field-error textarea { border-color: #dc3545; }
+        .form-label { font-weight: 600; margin-bottom: .4rem; }
+        .form-text { color: var(--muted); font-size: .85rem; }
+        .form-text ul { padding-left: 1.1rem; margin: .35rem 0 0; }
+
+        /* ==========================================================
+           Treino card (lista + home)
+           ========================================================== */
+        .tcard {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 1.4rem;
+            box-shadow: var(--shadow-sm);
+            transition: border-color .15s ease;
+        }
+        .tcard:hover { border-color: var(--brand-200); }
+        .tcard-title { font-size: 1.2rem; margin: 0; line-height: 1.2; }
+        .tcard-title a { color: var(--ink); text-decoration: none; }
+        .tcard-actions { position: relative; z-index: 2; }
+
+        /* ==========================================================
+           Auth (login + cadastro)
+           ========================================================== */
+        .auth-wrap { max-width: 1020px; margin: 0 auto; }
+
+        .auth-shell {
+            display: grid;
+            grid-template-columns: 1fr;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+        }
+        @media (min-width: 992px) {
+            .auth-shell { grid-template-columns: 5fr 6fr; }
+        }
+
+        .auth-aside {
+            background:
+                radial-gradient(circle at 90% 0%, rgba(255, 255, 255, .16), transparent 45%),
+                linear-gradient(150deg, #2748F5 0%, #172B9E 100%);
+            color: #fff;
+            padding: 2.75rem 2.5rem;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        .auth-aside h2 { color: #fff; font-size: 2rem; line-height: 1.1; font-weight: 800; }
+        .auth-aside p { color: rgba(255, 255, 255, .8); }
+        .auth-points { list-style: none; padding: 0; margin: 0; display: grid; gap: 1rem; }
+        .auth-points li { display: flex; gap: .8rem; align-items: flex-start; color: rgba(255, 255, 255, .92); }
+        .auth-points i {
+            width: 34px;
+            height: 34px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, .16);
+            display: inline-grid;
+            place-items: center;
+            flex: none;
+        }
+
+        .auth-main { padding: 2.25rem 1.5rem; }
+        @media (min-width: 768px) { .auth-main { padding: 3rem 3.25rem; } }
+
+        /* ==========================================================
+           Footer
+           ========================================================== */
         .site-footer {
-            background: var(--dark);
-            color: #cbd5e1;
-            padding: 22px 0;
-            text-align: center;
+            background: var(--ink);
+            color: #B8C2DA;
+            padding: 3rem 0 1.5rem;
+        }
+        .site-footer .navbar-brand { color: #fff; }
+        .site-footer h6 { color: #fff; font-family: var(--font-display); font-size: 1rem; margin-bottom: .9rem; }
+        .site-footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .5rem; }
+        .site-footer a { color: #B8C2DA; text-decoration: none; }
+        .site-footer a:hover { color: #fff; }
+        .footer-bottom {
+            border-top: 1px solid rgba(255, 255, 255, .12);
+            margin-top: 2.25rem;
+            padding-top: 1.25rem;
+            font-size: .875rem;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation: none !important;
+                transition: none !important;
+                scroll-behavior: auto !important;
+            }
         }
     </style>
 
@@ -91,65 +398,74 @@
 </head>
 <body>
 
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="{% url 'home' %}">
-            <i class="bi bi-activity text-primary"></i> FitManager
-        </a>
+<a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
-        <button class="navbar-toggler" type="button"
-                data-bs-toggle="collapse" data-bs-target="#menu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<header class="site-header sticky-top">
+    <nav class="navbar navbar-expand-lg" aria-label="Navegação principal">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <span class="brand-mark"><i class="bi bi-activity"></i></span>
+                FitManager
+            </a>
 
-        <div class="collapse navbar-collapse" id="menu">
-            <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'home' %}">Início</a>
-                </li>
+            <button class="navbar-toggler" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#menu"
+                    aria-controls="menu" aria-expanded="false"
+                    aria-label="Abrir menu">
+                <span class="navbar-toggler-icon"></span>
+            </button>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'lista_treinos' %}">Treinos</a>
-                </li>
-
-                {% if user.is_authenticated %}
+            {% with u=request.resolver_match.url_name %}
+            <div class="collapse navbar-collapse" id="menu">
+                <ul class="navbar-nav me-auto mt-3 mt-lg-0 ms-lg-3">
                     <li class="nav-item">
-                        <span class="nav-link">
-                            Olá, {{ user.username }}
-                        </span>
+                        <a class="nav-link{% if u == 'home' %} active{% endif %}"
+                           href="{% url 'home' %}"
+                           {% if u == 'home' %}aria-current="page"{% endif %}>Início</a>
                     </li>
                     <li class="nav-item">
-                        <form method="post" action="{% url 'logout' %}">
+                        <a class="nav-link{% if u == 'lista_treinos' or u == 'detalhe_treino' or u == 'criar_treino' or u == 'editar_treino' or u == 'excluir_treino' %} active{% endif %}"
+                           href="{% url 'lista_treinos' %}">Treinos</a>
+                    </li>
+                </ul>
+
+                <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 mt-3 mt-lg-0 pb-3 pb-lg-0">
+                    {% if user.is_authenticated %}
+                        <span class="user-chip">
+                            <span class="avatar" aria-hidden="true">{{ user.username|first|upper }}</span>
+                            {{ user.username }}
+                        </span>
+
+                        <a class="btn btn-primary btn-sm" href="{% url 'criar_treino' %}">
+                            <i class="bi bi-plus-lg me-1"></i>Novo treino
+                        </a>
+
+                        <form method="post" action="{% url 'logout' %}" class="d-flex">
                             {% csrf_token %}
-                            <button class="btn btn-outline-light btn-sm" type="submit">
+                            <button class="btn btn-outline-secondary btn-sm flex-grow-1" type="submit">
                                 Sair
                             </button>
                         </form>
-                    </li>
-                {% else %}
-                    <li class="nav-item">
-                        <a class="btn btn-primary btn-sm"
-                           href="{% url 'login' %}">Entrar</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="btn btn-outline-light btn-sm"
-                           href="{% url 'cadastro' %}">Cadastrar</a>
-                    </li>
-                {% endif %}
-            </ul>
+                    {% else %}
+                        <a class="btn btn-outline-secondary btn-sm" href="{% url 'login' %}">Entrar</a>
+                        <a class="btn btn-primary btn-sm" href="{% url 'cadastro' %}">Criar conta</a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endwith %}
         </div>
-    </div>
-</nav>
+    </nav>
+</header>
 
-<main class="main-content">
+<main class="main-content" id="conteudo">
     <div class="container">
 
         {% if messages %}
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show">
+                <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %} alert-dismissible fade show" role="alert">
                     {{ message }}
                     <button type="button" class="btn-close"
-                            data-bs-dismiss="alert"></button>
+                            data-bs-dismiss="alert" aria-label="Fechar"></button>
                 </div>
             {% endfor %}
         {% endif %}
@@ -161,10 +477,40 @@
 
 <footer class="site-footer">
     <div class="container">
-        <p class="mb-1">
-            <i class="bi bi-activity"></i> <strong>FitManager</strong>
-        </p>
-        <small>Organize seus treinos. Evolua todos os dias.</small>
+        <div class="row g-4">
+            <div class="col-lg-5">
+                <a class="navbar-brand mb-3" href="{% url 'home' %}">
+                    <span class="brand-mark"><i class="bi bi-activity"></i></span>
+                    FitManager
+                </a>
+                <p class="mb-0">Organize seus treinos. Evolua todos os dias.</p>
+            </div>
+
+            <div class="col-6 col-lg-3 offset-lg-1">
+                <h6>Navegação</h6>
+                <ul>
+                    <li><a href="{% url 'home' %}">Início</a></li>
+                    <li><a href="{% url 'lista_treinos' %}">Treinos</a></li>
+                    {% if user.is_authenticated %}
+                        <li><a href="{% url 'criar_treino' %}">Novo treino</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+
+            {% if not user.is_authenticated %}
+                <div class="col-6 col-lg-3">
+                    <h6>Conta</h6>
+                    <ul>
+                        <li><a href="{% url 'login' %}">Entrar</a></li>
+                        <li><a href="{% url 'cadastro' %}">Criar conta</a></li>
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="footer-bottom">
+            &copy; {% now "Y" %} FitManager. Todos os direitos reservados.
+        </div>
     </div>
 </footer>
 
