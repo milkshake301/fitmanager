@@ -11,6 +11,11 @@ urlpatterns = [
     path("treinos/<int:id>/editar/", views.editar_treino, name="editar_treino"),
     path("treinos/<int:id>/excluir/", views.excluir_treino, name="excluir_treino"),
     path("cadastro/", views.cadastro, name="cadastro"),
+    path("mensalidades/", views.minhas_mensalidades, name="minhas_mensalidades"),
+    path("mensalidades/<int:id>/pagar/", views.pagar_mensalidade, name="pagar_mensalidade"),
+    path("mensalidades/<int:id>/atualizar/", views.atualizar_pagamento, name="atualizar_pagamento"),
+    path("pagamento/retorno/", views.pagamento_retorno, name="pagamento_retorno"),
+    path("pagamento/webhook/", views.webhook_mercadopago, name="webhook_mercadopago"),
     path(
         "login/",
         auth_views.LoginView.as_view(

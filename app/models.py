@@ -1,6 +1,8 @@
+from decimal import Decimal
 
-from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MaxValueValidator, MinValueValidator
+from django.db import models
 
 
 class Aluno(models.Model):
@@ -89,9 +91,62 @@ class Matricula(models.Model):
     data_inicio = models.DateField()
     data_fim = models.DateField(null=True, blank=True)
     ativa = models.BooleanField(default=True)
+    valor_mensalidade = models.DecimalField(
+        max_digits=8,
+        decimal_places=2,
+        default=Decimal("99.90"),
+        help_text="Valor cobrado a cada mês",
+    )
+    dia_vencimento = models.PositiveSmallIntegerField(
+        default=10,
+        validators=[MinValueValidator(1), MaxValueValidator(28)],
+        help_text="Dia do mês do vencimento (1 a 28)",
+    )
 
     def __str__(self):
         return f"{self.aluno} - {self.plano}"
+
+
+class Mensalidade(models.Model):
+    STATUS_CHOICES = [
+        ("Pendente", "Pendente"),
+        ("Paga", "Paga"),
+        ("Cancelada", "Cancelada"),
+    ]
+
+    matricula = models.ForeignKey(
+        Matricula,
+        on_delete=models.CASCADE,
+        related_name="mensalidades"
+    )
+    competencia = models.DateField(
+        help_text="Mês de referência (use o dia 1)"
+    )
+    valor = models.DecimalField(max_digits=8, decimal_places=2)
+    vencimento = models.DateField()
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="Pendente",
+    )
+    data_pagamento = models.DateField(null=True, blank=True)
+    mp_payment_id = models.CharField(
+        "ID do pagamento (Mercado Pago)",
+        max_length=40,
+        blank=True,
+    )
+
+    class Meta:
+        ordering = ["-competencia"]
+        unique_together = [("matricula", "competencia")]
+
+    def __str__(self):
+        return f"{self.matricula.aluno} - {self.competencia:%m/%Y} ({self.status})"
+
+    @property
+    def em_atraso(self):
+        from django.utils import timezone
+        return self.status == "Pendente" and self.vencimento < timezone.localdate()
 
 
 class RegistroTreino(models.Model):

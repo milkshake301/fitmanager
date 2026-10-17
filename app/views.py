@@ -1,10 +1,16 @@
+import json
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import UserCreationForm
+from django.core.mail import send_mail
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 
-from .forms import TreinoForm
-from .models import Treino
+from . import pagamentos
+from .forms import CadastroForm, TreinoForm
+from .models import Aluno, Mensalidade, Treino
 from django.apps import AppConfig as BaseAppConfig
 
 
@@ -90,16 +96,159 @@ def cadastro(request):
         return redirect("home")
 
     if request.method == "POST":
-        form = UserCreationForm(request.POST)
+        form = CadastroForm(request.POST)
 
         if form.is_valid():
-            form.save()
+            user = form.save()
+            Aluno.objects.get_or_create(usuario=user)
+
+            # fail_silently: um problema no envio não deve impedir o cadastro
+            send_mail(
+                subject="Bem-vindo ao FitManager",
+                message=(
+                    f"Olá, {user.username}!\n\n"
+                    "Sua conta no FitManager foi criada com sucesso. "
+                    "Agora é só entrar e cadastrar seus treinos.\n"
+                ),
+                from_email=None,  # usa DEFAULT_FROM_EMAIL
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+
             messages.success(
                 request,
-                "Conta criada com sucesso! Agora você pode entrar.",
+                "Conta criada com sucesso! Enviamos um e-mail de boas-vindas.",
             )
             return redirect("login")
     else:
-        form = UserCreationForm()
+        form = CadastroForm()
 
     return render(request, "treinos/cadastro.html", {"form": form})
+
+
+@login_required
+def minhas_mensalidades(request):
+    aluno = Aluno.objects.filter(usuario=request.user).first()
+    mensalidades = (
+        Mensalidade.objects.filter(matricula__aluno=aluno)
+        .select_related("matricula")
+        if aluno
+        else Mensalidade.objects.none()
+    )
+    return render(
+        request,
+        "treinos/mensalidades.html",
+        {"mensalidades": mensalidades},
+    )
+
+
+def _mensalidade_do_usuario(request, id):
+    # Só o dono da mensalidade consegue pagar ou atualizar
+    return get_object_or_404(
+        Mensalidade,
+        id=id,
+        matricula__aluno__usuario=request.user,
+    )
+
+
+@login_required
+@require_POST
+def pagar_mensalidade(request, id):
+    mensalidade = _mensalidade_do_usuario(request, id)
+
+    if mensalidade.status != "Pendente":
+        messages.info(request, "Esta mensalidade não está pendente.")
+        return redirect("minhas_mensalidades")
+
+    try:
+        url_pagamento = pagamentos.criar_preferencia(mensalidade)
+    except pagamentos.PagamentoErro:
+        messages.error(
+            request,
+            "Não foi possível iniciar o pagamento agora. Tente novamente em instantes.",
+        )
+        return redirect("minhas_mensalidades")
+
+    # Leva o aluno para o checkout do Mercado Pago (Pix, cartão ou boleto)
+    return redirect(url_pagamento)
+
+
+@login_required
+def pagamento_retorno(request):
+    """Página para onde o Mercado Pago devolve o aluno depois do checkout."""
+    payment_id = request.GET.get("payment_id") or request.GET.get("collection_id")
+    status_url = request.GET.get("status") or request.GET.get("collection_status")
+
+    mensalidade = None
+    if payment_id and payment_id != "null":
+        try:
+            # Não confiamos no status da URL: reconsultamos na API
+            mensalidade = pagamentos.sincronizar(pagamentos.buscar_pagamento(payment_id))
+        except pagamentos.PagamentoErro:
+            pass
+
+    if mensalidade and mensalidade.status == "Paga":
+        messages.success(request, "Pagamento confirmado! Obrigado.")
+    elif status_url in ("pending", "in_process"):
+        messages.info(
+            request,
+            "Pagamento em análise. Assim que for confirmado, a mensalidade será atualizada.",
+        )
+    else:
+        messages.warning(request, "O pagamento não foi concluído. Você pode tentar novamente.")
+
+    return redirect("minhas_mensalidades")
+
+
+@login_required
+@require_POST
+def atualizar_pagamento(request, id):
+    """Botão "Já paguei? Atualizar": busca o pagamento e atualiza o status."""
+    mensalidade = _mensalidade_do_usuario(request, id)
+
+    try:
+        for pagamento in pagamentos.buscar_pagamentos_da_mensalidade(mensalidade):
+            if pagamento.get("status") == "approved":
+                pagamentos.sincronizar(pagamento)
+                break
+    except pagamentos.PagamentoErro:
+        messages.error(request, "Não foi possível consultar o pagamento agora.")
+        return redirect("minhas_mensalidades")
+
+    mensalidade.refresh_from_db()
+    if mensalidade.status == "Paga":
+        messages.success(request, "Pagamento confirmado! Obrigado.")
+    else:
+        messages.info(request, "Ainda não encontramos um pagamento aprovado para esta mensalidade.")
+    return redirect("minhas_mensalidades")
+
+
+@csrf_exempt
+@require_POST
+def webhook_mercadopago(request):
+    """Recebe os avisos do Mercado Pago (não usa login nem CSRF)."""
+    if not pagamentos.assinatura_valida(request):
+        return HttpResponse(status=401)
+
+    tipo = request.GET.get("type") or request.GET.get("topic")
+    payment_id = request.GET.get("data.id") or request.GET.get("id")
+
+    if not tipo or not payment_id:
+        try:
+            corpo = json.loads(request.body or b"{}")
+        except ValueError:
+            corpo = {}
+        tipo = tipo or corpo.get("type")
+        payment_id = payment_id or (corpo.get("data") or {}).get("id")
+
+    # Outros tipos de evento são ignorados (respondemos 200 para não reenviar)
+    if tipo != "payment" or not payment_id:
+        return HttpResponse(status=200)
+
+    try:
+        pagamentos.sincronizar(pagamentos.buscar_pagamento(payment_id))
+    except pagamentos.PagamentoErro:
+        # 500 faz o Mercado Pago tentar de novo mais tarde
+        return HttpResponse(status=500)
+
+    return HttpResponse(status=200)

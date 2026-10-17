@@ -1,47 +1,37 @@
-
 from django.contrib import admin
-from .models import (
-    Aluno,
-    Professor,
-    Treino,
-    Exercicio,
-    Matricula,
-    RegistroTreino,
-)
+from django.utils import timezone
+
+from .models import Aluno, Matricula, Mensalidade
 
 
 @admin.register(Aluno)
 class AlunoAdmin(admin.ModelAdmin):
-    list_display = ("id", "usuario", "telefone", "data_cadastro")
-    search_fields = ("usuario__username", "telefone")
-
-
-@admin.register(Professor)
-class ProfessorAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome", "especialidade", "email")
-    search_fields = ("nome", "especialidade", "email")
-
-
-@admin.register(Treino)
-class TreinoAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome", "objetivo", "nivel", "professor")
-    search_fields = ("nome", "objetivo")
-    list_filter = ("nivel",)
-
-
-@admin.register(Exercicio)
-class ExercicioAdmin(admin.ModelAdmin):
-    list_display = ("id", "nome", "grupo_muscular", "series", "repeticoes")
-    search_fields = ("nome", "grupo_muscular")
+    list_display = ("usuario", "telefone", "data_cadastro")
+    search_fields = ("usuario__username", "usuario__email")
 
 
 @admin.register(Matricula)
 class MatriculaAdmin(admin.ModelAdmin):
-    list_display = ("id", "aluno", "plano", "data_inicio", "data_fim", "ativa")
+    list_display = ("aluno", "plano", "valor_mensalidade", "dia_vencimento", "data_inicio", "ativa")
     list_filter = ("plano", "ativa")
 
 
-@admin.register(RegistroTreino)
-class RegistroTreinoAdmin(admin.ModelAdmin):
-    list_display = ("id", "aluno", "treino", "data_realizacao")
-    list_filter = ("data_realizacao",)
+@admin.register(Mensalidade)
+class MensalidadeAdmin(admin.ModelAdmin):
+    list_display = (
+        "matricula",
+        "competencia",
+        "valor",
+        "vencimento",
+        "status",
+        "data_pagamento",
+        "mp_payment_id",
+    )
+    list_filter = ("status", "vencimento")
+    search_fields = ("matricula__aluno__usuario__username", "mp_payment_id")
+    readonly_fields = ("mp_payment_id",)
+    actions = ["marcar_como_paga"]
+
+    @admin.action(description="Marcar selecionadas como pagas (pagamento manual)")
+    def marcar_como_paga(self, request, queryset):
+        queryset.update(status="Paga", data_pagamento=timezone.localdate())

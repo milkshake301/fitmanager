@@ -427,6 +427,12 @@
                         <a class="nav-link{% if u == 'lista_treinos' or u == 'detalhe_treino' or u == 'criar_treino' or u == 'editar_treino' or u == 'excluir_treino' %} active{% endif %}"
                            href="{% url 'lista_treinos' %}">Treinos</a>
                     </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link{% if u == 'minhas_mensalidades' %} active{% endif %}"
+                           href="{% url 'minhas_mensalidades' %}">Mensalidades</a>
+                    </li>
+                    {% endif %}
                 </ul>
 
                 <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-2 gap-lg-3 mt-3 mt-lg-0 pb-3 pb-lg-0">
