@@ -1,5 +1,6 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import views, views_personal as personal
 
@@ -28,7 +29,12 @@ urlpatterns = [
     path("personal/listas/nova/", personal.criar_lista, name="criar_lista"),
     path("personal/listas/<int:id>/editar/", personal.editar_lista, name="editar_lista"),
     path("personal/listas/<int:id>/excluir/", personal.excluir_lista, name="excluir_lista"),
-    path("personal/financeiro/", personal.financeiro, name="financeiro"),
+    # O financeiro agora faz parte do painel. A rota antiga só redireciona (links/favoritos antigos).
+    path(
+        "personal/financeiro/",
+        RedirectView.as_view(pattern_name="painel_personal", query_string=True),
+        name="financeiro",
+    ),
     path("personal/financeiro/gerar/", personal.gerar_mensalidades, name="gerar_mensalidades"),
     path("personal/mensalidades/<int:id>/paga/", personal.marcar_mensalidade_paga, name="marcar_mensalidade_paga"),
     path("personal/mensalidades/<int:id>/cancelar/", personal.cancelar_mensalidade, name="cancelar_mensalidade"),

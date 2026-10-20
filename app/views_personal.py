@@ -1,4 +1,4 @@
-"""Área do personal: painel, turmas, listas de exercícios e financeiro."""
+"""Área do personal: painel (com financeiro), turmas e listas de exercícios."""
 from decimal import Decimal
 from functools import wraps
 
@@ -42,26 +42,54 @@ def _mensalidades_do_personal(personal):
 
 @personal_required
 def painel_personal(request):
+    """Painel do personal: resumo, turmas, listas e financeiro do mês na mesma página."""
     personal = request.personal
     hoje = timezone.localdate()
-    mes_atual = hoje.replace(day=1)
+
+    # Filtros do financeiro (GET)
+    competencia = cobrancas.competencia_de_texto(request.GET.get("mes", "")) or hoje.replace(day=1)
+    status = request.GET.get("status", "")
+    turma_id = request.GET.get("turma", "")
 
     turmas = (
         personal.turmas.filter(ativa=True)
         .annotate(total_alunos=Count("matriculas", filter=Q(matriculas__ativa=True)))
     )
-    mensalidades_mes = _mensalidades_do_personal(personal).filter(competencia=mes_atual)
-    em_atraso = _mensalidades_do_personal(personal).filter(status="Pendente", vencimento__lt=hoje)
+
+    # Totais do mês inteiro (não mudam com os filtros de turma/status)
+    mensalidades_mes = _mensalidades_do_personal(personal).filter(competencia=competencia)
+    totais = {
+        "pago": mensalidades_mes.filter(status="Paga").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
+        "pendente": mensalidades_mes.filter(status="Pendente").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
+        "atraso": mensalidades_mes.filter(status="Pendente", vencimento__lt=hoje).count(),
+    }
+
+    # Tabela de mensalidades (com filtros)
+    mensalidades = (
+        mensalidades_mes
+        .select_related("matricula__aluno__usuario", "matricula__turma")
+        .order_by("matricula__turma__nome", "matricula__aluno__usuario__username")
+    )
+    if turma_id.isdigit():
+        mensalidades = mensalidades.filter(matricula__turma_id=turma_id)
+
+    if status == "atraso":
+        mensalidades = mensalidades.filter(status="Pendente", vencimento__lt=hoje)
+    elif status in ("Pendente", "Paga", "Cancelada"):
+        mensalidades = mensalidades.filter(status=status)
 
     contexto = {
         "personal": personal,
         "turmas": turmas,
         "total_alunos": personal.alunos.count(),
-        "recebido_mes": mensalidades_mes.filter(status="Paga").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
-        "a_receber_mes": mensalidades_mes.filter(status="Pendente").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
-        "qtd_atraso": em_atraso.count(),
         "listas_recentes": personal.listas.select_related("aluno__usuario")[:5],
-        "mes_atual": mes_atual,
+        # financeiro
+        "competencia": competencia,
+        "mensalidades": mensalidades,
+        "totais": totais,
+        "status": status,
+        "turma_id": turma_id,
+        "turmas_filtro": personal.turmas.all(),
     }
     return render(request, "personal/painel.html", contexto)
 
@@ -282,50 +310,6 @@ def excluir_lista(request, id):
 # ---------------------------------------------------------------------------
 
 @personal_required
-def financeiro(request):
-    personal = request.personal
-    hoje = timezone.localdate()
-
-    competencia = cobrancas.competencia_de_texto(request.GET.get("mes", "")) or hoje.replace(day=1)
-    status = request.GET.get("status", "")
-    turma_id = request.GET.get("turma", "")
-
-    mensalidades = (
-        _mensalidades_do_personal(personal)
-        .filter(competencia=competencia)
-        .select_related("matricula__aluno__usuario", "matricula__turma")
-        .order_by("matricula__turma__nome", "matricula__aluno__usuario__username")
-    )
-    if turma_id.isdigit():
-        mensalidades = mensalidades.filter(matricula__turma_id=turma_id)
-
-    # Totais antes do filtro de status, para o resumo sempre mostrar o mês todo
-    totais = {
-        "pago": mensalidades.filter(status="Paga").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
-        "pendente": mensalidades.filter(status="Pendente").aggregate(t=Sum("valor"))["t"] or Decimal("0"),
-        "atraso": mensalidades.filter(status="Pendente", vencimento__lt=hoje).count(),
-    }
-
-    if status == "atraso":
-        mensalidades = mensalidades.filter(status="Pendente", vencimento__lt=hoje)
-    elif status in ("Pendente", "Paga", "Cancelada"):
-        mensalidades = mensalidades.filter(status=status)
-
-    return render(
-        request,
-        "personal/financeiro.html",
-        {
-            "mensalidades": mensalidades,
-            "totais": totais,
-            "competencia": competencia,
-            "status": status,
-            "turma_id": turma_id,
-            "turmas": personal.turmas.all(),
-        },
-    )
-
-
-@personal_required
 @require_POST
 def gerar_mensalidades(request):
     competencia = cobrancas.competencia_de_texto(request.POST.get("mes", "")) or timezone.localdate()
@@ -335,11 +319,11 @@ def gerar_mensalidades(request):
         messages.success(request, f"{criadas} mensalidade(s) gerada(s) para {competencia:%m/%Y}.")
     else:
         messages.info(request, f"Todas as mensalidades de {competencia:%m/%Y} já estavam geradas.")
-    return redirect(f"{_url_financeiro()}?mes={competencia:%Y-%m}")
+    return redirect(f"{_url_financeiro()}?mes={competencia:%Y-%m}#financeiro")
 
 
 def _url_financeiro():
-    return reverse("financeiro")
+    return reverse("painel_personal")
 
 
 def _mensalidade_do_personal(request, id):
@@ -347,7 +331,7 @@ def _mensalidade_do_personal(request, id):
 
 
 def _voltar_financeiro(request, mensalidade):
-    return redirect(f"{_url_financeiro()}?mes={mensalidade.competencia:%Y-%m}")
+    return redirect(f"{_url_financeiro()}?mes={mensalidade.competencia:%Y-%m}#financeiro")
 
 
 @personal_required

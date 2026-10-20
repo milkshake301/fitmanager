@@ -63,10 +63,6 @@
                         <a class="nav-link{% if u == 'listas_exercicios' or u == 'criar_lista' or u == 'editar_lista' or u == 'detalhe_lista' %} active{% endif %}"
                            href="{% url 'listas_exercicios' %}">Listas</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link{% if u == 'financeiro' %} active{% endif %}"
-                           href="{% url 'financeiro' %}">Financeiro</a>
-                    </li>
                     {% elif user.is_authenticated %}
                     <li class="nav-item">
                         <a class="nav-link{% if u == 'minhas_listas' or u == 'detalhe_lista' %} active{% endif %}"
