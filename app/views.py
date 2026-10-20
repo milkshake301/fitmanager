@@ -3,14 +3,14 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
 from . import pagamentos
 from .forms import CadastroForm, TreinoForm
-from .models import Aluno, Mensalidade, Treino
+from .models import Aluno, ListaExercicios, Matricula, Mensalidade, Professor, Treino
 from django.apps import AppConfig as BaseAppConfig
 
 
@@ -49,7 +49,10 @@ def criar_treino(request):
     form = TreinoForm(request.POST or None)
 
     if request.method == "POST" and form.is_valid():
-        treino = form.save()
+        treino = form.save(commit=False)
+        # Se quem cadastrou é personal, o treino fica no nome dele
+        treino.professor = Professor.objects.filter(usuario=request.user).first()
+        treino.save()
         messages.success(request, f"Treino “{treino.nome}” cadastrado com sucesso.")
         return redirect("lista_treinos")
 
@@ -99,16 +102,20 @@ def cadastro(request):
         form = CadastroForm(request.POST)
 
         if form.is_valid():
+            # O form cria o perfil certo (Aluno ou Personal) junto com o usuário
             user = form.save()
-            Aluno.objects.get_or_create(usuario=user)
+
+            if form.eh_personal:
+                proximo_passo = "Agora é só entrar, criar suas turmas e adicionar seus alunos."
+            else:
+                proximo_passo = "Agora é só entrar e acompanhar seus treinos e mensalidades."
 
             # fail_silently: um problema no envio não deve impedir o cadastro
             send_mail(
                 subject="Bem-vindo ao FitManager",
                 message=(
-                    f"Olá, {user.username}!\n\n"
-                    "Sua conta no FitManager foi criada com sucesso. "
-                    "Agora é só entrar e cadastrar seus treinos.\n"
+                    f"Olá, {user.first_name or user.username}!\n\n"
+                    f"Sua conta no FitManager foi criada com sucesso. {proximo_passo}\n"
                 ),
                 from_email=None,  # usa DEFAULT_FROM_EMAIL
                 recipient_list=[user.email],
@@ -139,6 +146,53 @@ def minhas_mensalidades(request):
         request,
         "treinos/mensalidades.html",
         {"mensalidades": mensalidades},
+    )
+
+
+@login_required
+def minhas_listas(request):
+    """Área do aluno: turmas em que está e listas que o personal montou."""
+    aluno = Aluno.objects.filter(usuario=request.user).first()
+    if aluno is None:
+        # Personal não tem "minhas listas": vai para o painel dele
+        return redirect("painel_personal")
+
+    listas = (
+        ListaExercicios.objects.filter(aluno=aluno)
+        .select_related("personal")
+        .prefetch_related("itens")
+    )
+    matriculas = (
+        Matricula.objects.filter(aluno=aluno, ativa=True, turma__isnull=False)
+        .select_related("turma__personal")
+    )
+    return render(
+        request,
+        "aluno/minhas_listas.html",
+        {
+            "listas_ativas": [l for l in listas if l.ativa],
+            "listas_arquivadas": [l for l in listas if not l.ativa],
+            "matriculas": matriculas,
+        },
+    )
+
+
+@login_required
+def detalhe_lista(request, id):
+    lista = get_object_or_404(
+        ListaExercicios.objects.select_related("personal", "aluno__usuario"),
+        id=id,
+    )
+    # Só o aluno dono da lista ou o personal que a criou podem ver
+    eh_aluno = lista.aluno.usuario_id == request.user.id
+    eh_personal = lista.personal.usuario_id == request.user.id
+    if not (eh_aluno or eh_personal):
+        raise Http404
+
+    return render(
+        request,
+        "aluno/detalhe_lista.html",
+        {"lista": lista, "itens": lista.itens.all(), "eh_personal": eh_personal},
     )
 
 

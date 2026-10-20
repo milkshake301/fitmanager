@@ -19,12 +19,10 @@
 
 {% if treinos %}
 
-    <div class="position-relative mb-4" style="max-width: 460px;">
+    <div class="search-box mb-4">
         <label for="busca" class="visually-hidden">Buscar treinos</label>
-        <i class="bi bi-search position-absolute top-50 translate-middle-y text-secondary"
-           style="left: 14px;" aria-hidden="true"></i>
+        <i class="bi bi-search search-icon" aria-hidden="true"></i>
         <input type="search" id="busca" class="form-control"
-               style="padding-left: 2.6rem;"
                placeholder="Buscar por nome, objetivo ou nível"
                autocomplete="off">
     </div>
@@ -89,7 +87,7 @@
     <div class="card p-5 text-center">
         <span class="tile-icon mx-auto mb-3"><i class="bi bi-inbox"></i></span>
         <h2 class="h4 fw-bold">Nenhum treino cadastrado</h2>
-        <p class="text-secondary mx-auto" style="max-width: 36ch;">
+        <p class="text-secondary mx-auto text-measure">
             Cadastre seu primeiro treino para começar.
         </p>
         <div>

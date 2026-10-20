@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ turma.nome }} | FitManager{% endblock %}
+
+{% block content %}
+
+<a href="{% url 'lista_turmas' %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>Voltar às turmas
+</a>
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">{{ turma.nome }}</h1>
+        <div class="d-flex flex-wrap gap-2 mt-2">
+            {% if turma.horario %}<span class="pill"><i class="bi bi-calendar-week"></i>{{ turma.horario }}</span>{% endif %}
+            <span class="pill pill-muted"><i class="bi bi-cash"></i>R$ {{ turma.valor_mensalidade }} / mês</span>
+            <span class="pill pill-muted"><i class="bi bi-calendar-event"></i>Vence dia {{ turma.dia_vencimento }}</span>
+            {% if not turma.ativa %}<span class="pill pill-warning">Encerrada</span>{% endif %}
+        </div>
+    </div>
+
+    <a href="{% url 'editar_turma' turma.id %}" class="btn btn-outline-secondary">
+        <i class="bi bi-pencil me-2"></i>Editar turma
+    </a>
+</div>
+
+{% if turma.descricao %}
+    <p class="text-secondary descricao-texto mb-4">{{ turma.descricao }}</p>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="p-4 pb-2">
+                <h2 class="h5 fw-bold mb-0">Alunos ({{ matriculas|length }})</h2>
+            </div>
+
+            {% if matriculas %}
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th class="ps-4">Aluno</th>
+                                <th>Mensalidade</th>
+                                <th>Desde</th>
+                                <th class="pe-4 text-end">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in matriculas %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <strong>{{ m.aluno.usuario.get_full_name|default:m.aluno.usuario.username }}</strong>
+                                        <div class="small text-secondary">{{ m.aluno.usuario.email }}</div>
+                                        {% if m.qtd_atraso %}
+                                            <span class="pill pill-danger mt-1"><i class="bi bi-exclamation-circle"></i>{{ m.qtd_atraso }} em atraso</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>R$ {{ m.valor_mensalidade }}<div class="small text-secondary">dia {{ m.dia_vencimento }}</div></td>
+                                    <td>{{ m.data_inicio|date:"d/m/Y" }}</td>
+                                    <td class="pe-4 text-end">
+                                        <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                            <a href="{% url 'criar_lista' %}?aluno={{ m.aluno.id }}" class="btn btn-primary btn-sm">
+                                                <i class="bi bi-list-check me-1"></i>Nova lista
+                                            </a>
+                                            <a href="{% url 'listas_exercicios' %}?aluno={{ m.aluno.id }}" class="btn btn-outline-secondary btn-sm">
+                                                Listas
+                                            </a>
+                                            <form method="post" action="{% url 'remover_aluno_turma' m.id %}"
+                                                  data-confirmar="Remover {{ m.aluno }} da turma? As mensalidades futuras pendentes serão canceladas.">
+                                                {% csrf_token %}
+                                                <button type="submit" class="btn btn-outline-danger btn-sm" title="Remover da turma">
+                                                    <i class="bi bi-person-dash"></i>
+                                                    <span class="visually-hidden">Remover da turma</span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-secondary px-4 pb-4 mb-0">Nenhum aluno nesta turma ainda. Use o formulário ao lado para adicionar.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card p-4">
+            <h2 class="h5 fw-bold mb-1">Adicionar aluno</h2>
+            <p class="text-secondary small mb-3">
+                O aluno precisa ter criado uma conta como aluno. A primeira mensalidade é gerada na hora.
+            </p>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% for field in form %}
+                    <div class="mb-3 field-control{% if field.errors %} field-error{% endif %}">
+                        <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}
+                            <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-person-plus me-2"></i>Adicionar à turma
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

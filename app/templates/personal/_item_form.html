@@ -1,0 +1,45 @@
+<div class="item-exercicio" data-item>
+    {% for hidden in item.hidden_fields %}{{ hidden }}{% endfor %}
+
+    <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+        <span class="item-num" data-num>{{ numero }}</span>
+        <div class="form-check mb-0">
+            {{ item.DELETE }}
+            <label class="form-check-label small" for="{{ item.DELETE.id_for_label }}">Remover</label>
+        </div>
+    </div>
+
+    {% if item.non_field_errors %}
+        <div class="text-danger small mb-2">{{ item.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="row g-2">
+        <div class="col-12 col-md-6">
+            <label class="form-label" for="{{ item.exercicio.id_for_label }}">{{ item.exercicio.label }}</label>
+            {{ item.exercicio }}
+            {% for e in item.exercicio.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+            <label class="form-label" for="{{ item.series.id_for_label }}">{{ item.series.label }}</label>
+            {{ item.series }}
+            {% for e in item.series.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+            <label class="form-label" for="{{ item.repeticoes.id_for_label }}">Reps</label>
+            {{ item.repeticoes }}
+            {% for e in item.repeticoes.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="col-4 col-md-2">
+            <label class="form-label" for="{{ item.carga.id_for_label }}">{{ item.carga.label }}</label>
+            {{ item.carga }}
+        </div>
+        <div class="col-4 col-md-3">
+            <label class="form-label" for="{{ item.descanso.id_for_label }}">{{ item.descanso.label }}</label>
+            {{ item.descanso }}
+        </div>
+        <div class="col-8 col-md-9">
+            <label class="form-label" for="{{ item.observacao.id_for_label }}">{{ item.observacao.label }}</label>
+            {{ item.observacao }}
+        </div>
+    </div>
+</div>

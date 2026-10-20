@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Painel do personal | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Olá, {{ personal.nome }}</h1>
+        <p class="text-secondary mb-0">
+            Resumo de {{ mes_atual|date:"F" }} de {{ mes_atual|date:"Y" }}{% if personal.especialidade %} · {{ personal.especialidade }}{% endif %}
+        </p>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{% url 'criar_turma' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-people me-2"></i>Nova turma
+        </a>
+        <a href="{% url 'criar_lista' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i>Nova lista
+        </a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="stat">
+            <div class="stat-label">Alunos ativos</div>
+            <div class="stat-value">{{ total_alunos }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat">
+            <div class="stat-label">Recebido no mês</div>
+            <div class="stat-value">R$ {{ recebido_mes|floatformat:2 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat">
+            <div class="stat-label">A receber no mês</div>
+            <div class="stat-value">R$ {{ a_receber_mes|floatformat:2 }}</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <a href="{% url 'financeiro' %}?status=atraso" class="text-decoration-none">
+            <div class="stat{% if qtd_atraso %} stat-alert{% endif %}">
+                <div class="stat-label">Mensalidades em atraso</div>
+                <div class="stat-value">{{ qtd_atraso }}</div>
+            </div>
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h5 fw-bold mb-0">Turmas ativas</h2>
+                <a href="{% url 'lista_turmas' %}" class="btn btn-outline-secondary btn-sm">Ver todas</a>
+            </div>
+
+            {% if turmas %}
+                <ul class="lista-simples">
+                    {% for turma in turmas %}
+                        <li>
+                            <div>
+                                <a href="{% url 'detalhe_turma' turma.id %}">{{ turma.nome }}</a>
+                                {% if turma.horario %}<div class="small text-secondary">{{ turma.horario }}</div>{% endif %}
+                            </div>
+                            <span class="pill pill-muted"><i class="bi bi-people"></i>{{ turma.total_alunos }}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-secondary mb-3">Você ainda não criou nenhuma turma.</p>
+                <div><a href="{% url 'criar_turma' %}" class="btn btn-primary btn-sm">Criar primeira turma</a></div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h5 fw-bold mb-0">Listas recentes</h2>
+                <a href="{% url 'listas_exercicios' %}" class="btn btn-outline-secondary btn-sm">Ver todas</a>
+            </div>
+
+            {% if listas_recentes %}
+                <ul class="lista-simples">
+                    {% for lista in listas_recentes %}
+                        <li>
+                            <div>
+                                <a href="{% url 'detalhe_lista' lista.id %}">{{ lista.titulo }}</a>
+                                <div class="small text-secondary">{{ lista.aluno.usuario.get_full_name|default:lista.aluno }}</div>
+                            </div>
+                            {% if not lista.ativa %}<span class="pill pill-muted">Arquivada</span>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-secondary mb-0">Nenhuma lista criada ainda.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

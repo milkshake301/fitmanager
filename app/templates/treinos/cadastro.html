@@ -9,7 +9,7 @@
 
         <aside class="auth-aside d-none d-lg-flex">
             <div>
-                <h2>Comece a organizar seus treinos.</h2>
+                <h2>Treine com quem entende de treino.</h2>
                 <p class="fs-5 mt-3 mb-0">
                     Crie sua conta e cadastre o primeiro treino em poucos minutos.
                 </p>
@@ -21,8 +21,12 @@
                     <span>Escolha um usuário e uma senha para acessar.</span>
                 </li>
                 <li>
-                    <i class="bi bi-clipboard2-plus"></i>
-                    <span>Cadastre treinos com objetivo, duração e nível.</span>
+                    <i class="bi bi-people"></i>
+                    <span>Personal: monte turmas e listas de exercícios para cada aluno.</span>
+                </li>
+                <li>
+                    <i class="bi bi-credit-card"></i>
+                    <span>Aluno: receba suas listas e pague a mensalidade por Pix, cartão ou boleto.</span>
                 </li>
                 <li>
                     <i class="bi bi-phone"></i>
@@ -46,28 +50,43 @@
 
                 {% for hidden in form.hidden_fields %}{{ hidden }}{% endfor %}
 
-                {% for field in form.visible_fields %}
-                    <div class="mb-3 field-control{% if field.errors %} field-error{% endif %}">
-
-                        <label for="{{ field.id_for_label }}" class="form-label">
-                            {{ field.label }}
-                        </label>
-
-                        {{ field }}
-
-                        {% if field.help_text %}
-                            <div class="form-text">
-                                {{ field.help_text|safe }}
-                            </div>
-                        {% endif %}
-
-                        {% for error in field.errors %}
-                            <div class="text-danger small mt-1" role="alert">
-                                {{ error }}
+                <fieldset class="mb-4">
+                    <legend class="form-label fs-6">{{ form.tipo_conta.label }}</legend>
+                    <div class="tipo-conta">
+                        {% for opcao in form.tipo_conta %}
+                            <div class="tipo-opcao">
+                                {{ opcao.tag }}
+                                <label for="{{ opcao.id_for_label }}">
+                                    {% if opcao.data.value == 'personal' %}
+                                        <i class="bi bi-person-badge"></i>
+                                        <strong>Sou personal</strong>
+                                        <small>Crio turmas, listas e cobro mensalidades</small>
+                                    {% else %}
+                                        <i class="bi bi-person"></i>
+                                        <strong>Sou aluno</strong>
+                                        <small>Recebo listas e pago minhas mensalidades</small>
+                                    {% endif %}
+                                </label>
                             </div>
                         {% endfor %}
-
                     </div>
+                    {% for error in form.tipo_conta.errors %}
+                        <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+                    {% endfor %}
+                </fieldset>
+
+                <div class="campos-personal" id="campos-personal">
+                    {% for field in form.visible_fields %}
+                        {% if field.name in form.CAMPOS_PERSONAL %}
+                            {% include "treinos/_campo.html" %}
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                {% for field in form.visible_fields %}
+                    {% if field.name != 'tipo_conta' and field.name not in form.CAMPOS_PERSONAL %}
+                        {% include "treinos/_campo.html" %}
+                    {% endif %}
                 {% endfor %}
 
                 <button type="submit" class="btn btn-primary btn-lg w-100 mt-2">
@@ -86,4 +105,21 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    (function () {
+        var bloco = document.getElementById('campos-personal');
+        var opcoes = document.querySelectorAll('input[name="{{ form.tipo_conta.html_name }}"]');
+
+        function atualizar() {
+            var personal = document.querySelector('input[name="{{ form.tipo_conta.html_name }}"]:checked');
+            bloco.hidden = !personal || personal.value !== 'personal';
+        }
+
+        opcoes.forEach(function (opcao) { opcao.addEventListener('change', atualizar); });
+        atualizar();
+    })();
+</script>
 {% endblock %}

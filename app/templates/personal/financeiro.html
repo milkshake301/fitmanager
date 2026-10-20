@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block title %}Financeiro | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Financeiro</h1>
+        <p class="text-secondary mb-0">Mensalidades de {{ competencia|date:"m/Y" }}.</p>
+    </div>
+
+    <form method="post" action="{% url 'gerar_mensalidades' %}">
+        {% csrf_token %}
+        <input type="hidden" name="mes" value="{{ competencia|date:'Y-m' }}">
+        <button type="submit" class="btn btn-primary">
+            <i class="bi bi-receipt me-2"></i>Gerar mensalidades de {{ competencia|date:"m/Y" }}
+        </button>
+    </form>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat">
+            <div class="stat-label">Recebido</div>
+            <div class="stat-value">R$ {{ totais.pago|floatformat:2 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat">
+            <div class="stat-label">Pendente</div>
+            <div class="stat-value">R$ {{ totais.pendente|floatformat:2 }}</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat{% if totais.atraso %} stat-alert{% endif %}">
+            <div class="stat-label">Em atraso</div>
+            <div class="stat-value">{{ totais.atraso }}</div>
+        </div>
+    </div>
+</div>
+
+<form method="get" class="filtros mb-4">
+    <div>
+        <label for="filtro-mes" class="form-label">Mês</label>
+        <input type="month" name="mes" id="filtro-mes" class="form-control" value="{{ competencia|date:'Y-m' }}">
+    </div>
+    <div>
+        <label for="filtro-turma" class="form-label">Turma</label>
+        <select name="turma" id="filtro-turma" class="form-select">
+            <option value="">Todas</option>
+            {% for turma in turmas %}
+                <option value="{{ turma.id }}"{% if turma_id == turma.id|stringformat:'d' %} selected{% endif %}>{{ turma.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <label for="filtro-status" class="form-label">Status</label>
+        <select name="status" id="filtro-status" class="form-select">
+            <option value="">Todos</option>
+            <option value="Pendente"{% if status == 'Pendente' %} selected{% endif %}>Pendente</option>
+            <option value="atraso"{% if status == 'atraso' %} selected{% endif %}>Em atraso</option>
+            <option value="Paga"{% if status == 'Paga' %} selected{% endif %}>Paga</option>
+            <option value="Cancelada"{% if status == 'Cancelada' %} selected{% endif %}>Cancelada</option>
+        </select>
+    </div>
+    <div>
+        <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+    </div>
+</form>
+
+{% if mensalidades %}
+    <div class="card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th class="ps-4">Aluno</th>
+                        <th>Turma</th>
+                        <th>Valor</th>
+                        <th>Vencimento</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-end">Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in mensalidades %}
+                        <tr>
+                            <td class="ps-4">{{ m.matricula.aluno.usuario.get_full_name|default:m.matricula.aluno.usuario.username }}</td>
+                            <td>{{ m.matricula.turma }}</td>
+                            <td>R$ {{ m.valor }}</td>
+                            <td>{{ m.vencimento|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if m.status == "Paga" %}
+                                    <span class="pill pill-success"><i class="bi bi-check-circle"></i>Paga</span>
+                                    <small class="text-secondary d-block mt-1">
+                                        {% if m.data_pagamento %}em {{ m.data_pagamento|date:"d/m/Y" }}{% endif %}
+                                        {% if m.mp_payment_id %}· Mercado Pago{% else %}· baixa manual{% endif %}
+                                    </small>
+                                {% elif m.em_atraso %}
+                                    <span class="pill pill-danger"><i class="bi bi-exclamation-circle"></i>Em atraso</span>
+                                {% elif m.status == "Cancelada" %}
+                                    <span class="pill pill-muted">Cancelada</span>
+                                {% else %}
+                                    <span class="pill pill-warning">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 text-end">
+                                <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                    {% if m.status == "Pendente" %}
+                                        <form method="post" action="{% url 'marcar_mensalidade_paga' m.id %}"
+                                              data-confirmar="Confirmar que {{ m.matricula.aluno }} pagou R$ {{ m.valor }} fora do sistema?">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-check2 me-1"></i>Recebi
+                                            </button>
+                                        </form>
+                                        <form method="post" action="{% url 'cancelar_mensalidade' m.id %}"
+                                              data-confirmar="Cancelar esta mensalidade?">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-danger btn-sm">Cancelar</button>
+                                        </form>
+                                    {% elif not m.mp_payment_id %}
+                                        <form method="post" action="{% url 'reabrir_mensalidade' m.id %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                <i class="bi bi-arrow-counterclockwise me-1"></i>Reabrir
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% else %}
+    <div class="card p-5 text-center">
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-receipt"></i></span>
+        <h2 class="h5 fw-bold">Nenhuma mensalidade encontrada</h2>
+        <p class="text-secondary mx-auto text-measure mb-0">
+            Use o botão “Gerar mensalidades” para criar as cobranças do mês para todos os alunos ativos.
+        </p>
+    </div>
+{% endif %}
+
+{% endblock %}

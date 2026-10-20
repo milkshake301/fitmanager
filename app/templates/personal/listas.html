@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Listas de exercícios | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Listas de exercícios</h1>
+        <p class="text-secondary mb-0">
+            {% if aluno_filtro %}
+                Listas de {{ aluno_filtro.usuario.get_full_name|default:aluno_filtro.usuario.username }}.
+            {% else %}
+                Cada lista é feita para um aluno específico.
+            {% endif %}
+        </p>
+    </div>
+
+    <a href="{% url 'criar_lista' %}{% if aluno_filtro %}?aluno={{ aluno_filtro.id }}{% endif %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nova lista
+    </a>
+</div>
+
+{% if alunos %}
+    <form method="get" class="filtros mb-4">
+        <div>
+            <label for="filtro-aluno" class="form-label">Aluno</label>
+            <select name="aluno" id="filtro-aluno" class="form-select">
+                <option value="">Todos os alunos</option>
+                {% for aluno in alunos %}
+                    <option value="{{ aluno.id }}"{% if aluno_filtro and aluno_filtro.id == aluno.id %} selected{% endif %}>
+                        {{ aluno.usuario.get_full_name|default:aluno.usuario.username }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <button type="submit" class="btn btn-outline-secondary">Filtrar</button>
+        </div>
+    </form>
+{% endif %}
+
+{% if listas %}
+    <div class="row g-4">
+        {% for lista in listas %}
+            <div class="col-md-6 col-xl-4">
+                <article class="tcard{% if not lista.ativa %} lista-arquivada{% endif %}">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="tile-icon"><i class="bi bi-list-check"></i></span>
+                        <h2 class="tcard-title fw-bold">
+                            <a href="{% url 'detalhe_lista' lista.id %}" class="stretched-link">{{ lista.titulo }}</a>
+                        </h2>
+                    </div>
+
+                    <p class="mb-3"><i class="bi bi-person text-primary me-2"></i>{{ lista.aluno.usuario.get_full_name|default:lista.aluno.usuario.username }}</p>
+
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        <span class="pill"><i class="bi bi-activity"></i>{{ lista.total_itens }} exercício{{ lista.total_itens|pluralize }}</span>
+                        {% if lista.objetivo %}<span class="pill pill-muted"><i class="bi bi-bullseye"></i>{{ lista.objetivo|truncatechars:30 }}</span>{% endif %}
+                        {% if not lista.ativa %}<span class="pill pill-muted">Arquivada</span>{% endif %}
+                    </div>
+
+                    <div class="tcard-actions d-flex flex-wrap gap-2 mt-auto">
+                        <a href="{% url 'editar_lista' lista.id %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-pencil me-1"></i>Editar
+                        </a>
+                        <form method="post" action="{% url 'excluir_lista' lista.id %}"
+                              data-confirmar="Excluir a lista “{{ lista.titulo }}”? Essa ação não pode ser desfeita.">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i>Excluir
+                            </button>
+                        </form>
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card p-5 text-center">
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-list-check"></i></span>
+        <h2 class="h4 fw-bold">Nenhuma lista por aqui</h2>
+        <p class="text-secondary mx-auto text-measure">
+            {% if alunos %}Monte a primeira lista de exercícios para um aluno.{% else %}Adicione alunos em uma turma para poder montar listas.{% endif %}
+        </p>
+        <div>
+            {% if alunos %}
+                <a href="{% url 'criar_lista' %}" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Nova lista</a>
+            {% else %}
+                <a href="{% url 'lista_turmas' %}" class="btn btn-primary">Ir para turmas</a>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

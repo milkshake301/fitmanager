@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ lista.titulo }} | FitManager{% endblock %}
+
+{% block content %}
+
+<a href="{% if eh_personal %}{% url 'listas_exercicios' %}{% else %}{% url 'minhas_listas' %}{% endif %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>Voltar às listas
+</a>
+
+<section class="detail-hero mb-4">
+    <div class="d-flex flex-wrap gap-2 mb-3">
+        <span class="pill"><i class="bi bi-activity"></i>{{ itens|length }} exercício{{ itens|length|pluralize }}</span>
+        {% if eh_personal %}
+            <span class="pill"><i class="bi bi-person"></i>{{ lista.aluno.usuario.get_full_name|default:lista.aluno.usuario.username }}</span>
+        {% else %}
+            <span class="pill"><i class="bi bi-person-badge"></i>{{ lista.personal.nome }}</span>
+        {% endif %}
+        {% if not lista.ativa %}<span class="pill">Arquivada</span>{% endif %}
+    </div>
+
+    <h1>{{ lista.titulo }}</h1>
+
+    {% if lista.objetivo %}
+        <p class="lead mt-3 mb-0">{{ lista.objetivo }}</p>
+    {% endif %}
+</section>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card p-4 p-md-5">
+            <h2 class="h4 fw-bold mb-2">Exercícios</h2>
+
+            {% for item in itens %}
+                <div class="exercicio-linha">
+                    <span class="item-num">{{ forloop.counter }}</span>
+                    <div>
+                        <div class="exercicio-nome">{{ item.exercicio }}</div>
+                        <div class="exercicio-meta">
+                            <span class="pill">{{ item.series }} x {{ item.repeticoes }}</span>
+                            {% if item.carga %}<span class="pill pill-muted"><i class="bi bi-speedometer"></i>{{ item.carga }}</span>{% endif %}
+                            {% if item.descanso %}<span class="pill pill-muted"><i class="bi bi-hourglass-split"></i>{{ item.descanso }}</span>{% endif %}
+                        </div>
+                        {% if item.observacao %}<p class="text-secondary small mt-2 mb-0">{{ item.observacao }}</p>{% endif %}
+                    </div>
+                </div>
+            {% empty %}
+                <p class="text-secondary mb-0">Esta lista ainda não tem exercícios.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if lista.observacoes %}
+            <div class="card p-4 mb-4">
+                <h2 class="h5 fw-bold mb-2">Observações</h2>
+                <p class="mb-0 descricao-texto">{{ lista.observacoes }}</p>
+            </div>
+        {% endif %}
+
+        {% if eh_personal %}
+            <div class="card p-4">
+                <h2 class="h5 fw-bold mb-3">Ações</h2>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'editar_lista' lista.id %}" class="btn btn-primary">
+                        <i class="bi bi-pencil me-2"></i>Editar lista
+                    </a>
+                    <form method="post" action="{% url 'excluir_lista' lista.id %}" class="d-grid"
+                          data-confirmar="Excluir a lista “{{ lista.titulo }}”? Essa ação não pode ser desfeita.">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-trash me-2"></i>Excluir lista
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% else %}
+            <div class="card p-4">
+                <p class="text-secondary small mb-0">
+                    Atualizada em {{ lista.atualizada_em|date:"d/m/Y" }}. Dúvidas sobre algum exercício? Fale com {{ lista.personal.nome }}.
+                </p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

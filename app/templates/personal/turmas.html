@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}Turmas | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Minhas turmas</h1>
+        <p class="text-secondary mb-0">
+            {{ turmas|length }} turma{{ turmas|length|pluralize }}.
+        </p>
+    </div>
+
+    <a href="{% url 'criar_turma' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>Nova turma
+    </a>
+</div>
+
+{% if turmas %}
+    <div class="row g-4">
+        {% for turma in turmas %}
+            <div class="col-md-6 col-xl-4">
+                <article class="tcard{% if not turma.ativa %} lista-arquivada{% endif %}">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="tile-icon"><i class="bi bi-people"></i></span>
+                        <h2 class="tcard-title fw-bold">
+                            <a href="{% url 'detalhe_turma' turma.id %}" class="stretched-link">{{ turma.nome }}</a>
+                        </h2>
+                    </div>
+
+                    {% if turma.horario %}
+                        <p class="mb-3"><i class="bi bi-calendar-week text-primary me-2"></i>{{ turma.horario }}</p>
+                    {% endif %}
+
+                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                        <span class="pill"><i class="bi bi-person"></i>{{ turma.total_alunos }} aluno{{ turma.total_alunos|pluralize }}</span>
+                        <span class="pill pill-muted"><i class="bi bi-cash"></i>R$ {{ turma.valor_mensalidade }}</span>
+                        {% if not turma.ativa %}<span class="pill pill-muted">Encerrada</span>{% endif %}
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card p-5 text-center">
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-people"></i></span>
+        <h2 class="h4 fw-bold">Nenhuma turma ainda</h2>
+        <p class="text-secondary mx-auto text-measure">
+            Crie uma turma, defina a mensalidade e adicione seus alunos.
+        </p>
+        <div>
+            <a href="{% url 'criar_turma' %}" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-2"></i>Criar turma
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

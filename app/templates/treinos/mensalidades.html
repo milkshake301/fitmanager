@@ -18,7 +18,7 @@
                 <thead>
                     <tr>
                         <th class="ps-4">Competência</th>
-                        <th>Plano</th>
+                        <th>Turma</th>
                         <th>Valor</th>
                         <th>Vencimento</th>
                         <th>Status</th>
@@ -29,17 +29,17 @@
                     {% for m in mensalidades %}
                         <tr>
                             <td class="ps-4">{{ m.competencia|date:"m/Y" }}</td>
-                            <td>{{ m.matricula.plano }}</td>
+                            <td>{{ m.matricula.turma|default:m.matricula.plano }}</td>
                             <td>R$ {{ m.valor }}</td>
                             <td>{{ m.vencimento|date:"d/m/Y" }}</td>
                             <td>
                                 {% if m.status == "Paga" %}
-                                    <span class="pill"><i class="bi bi-check-circle"></i>Paga</span>
+                                    <span class="pill pill-success"><i class="bi bi-check-circle"></i>Paga</span>
                                     {% if m.data_pagamento %}
                                         <small class="text-secondary d-block mt-1">em {{ m.data_pagamento|date:"d/m/Y" }}</small>
                                     {% endif %}
                                 {% elif m.em_atraso %}
-                                    <span class="pill" style="background:#FDE8E8;color:#B42318;">
+                                    <span class="pill pill-danger">
                                         <i class="bi bi-exclamation-circle"></i>Em atraso
                                     </span>
                                 {% else %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}Minhas listas | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="page-head">
+    <div>
+        <h1 class="fw-bold mb-1">Minhas listas</h1>
+        <p class="text-secondary mb-0">Exercícios que seu personal preparou para você.</p>
+    </div>
+    <a href="{% url 'minhas_mensalidades' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-receipt me-2"></i>Mensalidades
+    </a>
+</div>
+
+{% if matriculas %}
+    <div class="d-flex flex-wrap gap-2 mb-4">
+        {% for m in matriculas %}
+            <span class="pill">
+                <i class="bi bi-people"></i>{{ m.turma.nome }} · {{ m.turma.personal.nome }}{% if m.turma.horario %} · {{ m.turma.horario }}{% endif %}
+            </span>
+        {% endfor %}
+    </div>
+{% endif %}
+
+{% if listas_ativas %}
+    <div class="row g-4">
+        {% for lista in listas_ativas %}
+            <div class="col-md-6 col-xl-4">
+                <article class="tcard">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <span class="tile-icon"><i class="bi bi-list-check"></i></span>
+                        <h2 class="tcard-title fw-bold">
+                            <a href="{% url 'detalhe_lista' lista.id %}" class="stretched-link">{{ lista.titulo }}</a>
+                        </h2>
+                    </div>
+                    {% if lista.objetivo %}<p class="text-secondary mb-3">{{ lista.objetivo }}</p>{% endif %}
+                    <div class="d-flex flex-wrap gap-2 mt-auto">
+                        <span class="pill"><i class="bi bi-activity"></i>{{ lista.itens.all|length }} exercício{{ lista.itens.all|length|pluralize }}</span>
+                        <span class="pill pill-muted"><i class="bi bi-person-badge"></i>{{ lista.personal.nome }}</span>
+                    </div>
+                </article>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card p-5 text-center">
+        <span class="tile-icon mx-auto mb-3"><i class="bi bi-list-check"></i></span>
+        <h2 class="h5 fw-bold">Nenhuma lista ainda</h2>
+        <p class="text-secondary mx-auto text-measure mb-0">
+            Quando seu personal montar uma lista de exercícios para você, ela aparece aqui.
+        </p>
+    </div>
+{% endif %}
+
+{% if listas_arquivadas %}
+    <h2 class="h5 fw-bold mt-5 mb-3">Listas anteriores</h2>
+    <div class="card p-4">
+        <ul class="lista-simples">
+            {% for lista in listas_arquivadas %}
+                <li>
+                    <a href="{% url 'detalhe_lista' lista.id %}">{{ lista.titulo }}</a>
+                    <small class="text-secondary">{{ lista.atualizada_em|date:"d/m/Y" }}</small>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+{% endblock %}

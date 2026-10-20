@@ -2,112 +2,6 @@
 
 {% block title %}FitManager | Organize seus treinos{% endblock %}
 
-{% block extra_css %}
-<style>
-    .hero {
-        position: relative;
-        overflow: hidden;
-        color: #fff;
-        padding: clamp(1.75rem, 5vw, 4rem);
-        border-radius: 28px;
-        background:
-            radial-gradient(circle at 92% 8%, rgba(255, 255, 255, .16), transparent 42%),
-            linear-gradient(135deg, #2748F5 0%, #1A2FA8 100%);
-        box-shadow: var(--shadow-lg);
-    }
-    .hero h1 {
-        color: #fff;
-        font-size: clamp(2.4rem, 5.4vw, 4.1rem);
-        font-weight: 800;
-        line-height: 1.02;
-        max-width: 16ch;
-    }
-    .hero-lead {
-        color: rgba(255, 255, 255, .84);
-        font-size: 1.15rem;
-        max-width: 46ch;
-    }
-    .hero .btn-light { color: var(--brand-700); font-weight: 700; }
-    .btn-ghost {
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, .45);
-        background: transparent;
-    }
-    .btn-ghost:hover { color: #fff; background: rgba(255, 255, 255, .14); border-color: #fff; }
-
-    /* Prévia do produto: um treino de exemplo montado com os mesmos campos do sistema */
-    .preview { position: relative; min-height: 340px; }
-    .preview-card {
-        position: absolute;
-        background: #fff;
-        color: var(--ink);
-        border-radius: 20px;
-        padding: 1.4rem;
-        box-shadow: 0 30px 60px -22px rgba(6, 14, 60, .6);
-    }
-    .preview-back {
-        top: 0;
-        right: 0;
-        width: 80%;
-        transform: rotate(3.5deg);
-        opacity: .72;
-    }
-    .preview-front {
-        bottom: 0;
-        left: 0;
-        width: 90%;
-        animation: rise .7s .1s both cubic-bezier(.2, .7, .2, 1);
-    }
-    .preview-notes {
-        background: var(--canvas);
-        border-radius: 12px;
-        padding: .9rem 1rem;
-        font-size: .92rem;
-        color: var(--muted);
-        white-space: pre-line;
-    }
-    @keyframes rise {
-        from { opacity: 0; transform: translateY(18px); }
-        to   { opacity: 1; transform: none; }
-    }
-
-    .section-title { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 800; }
-    .section-gap { margin-top: clamp(3rem, 6vw, 5rem); }
-
-    .feature-main {
-        background: var(--brand-50);
-        border: 1px solid var(--brand-100);
-        border-radius: 22px;
-        padding: clamp(1.5rem, 3vw, 2.25rem);
-        height: 100%;
-    }
-    .feature-card {
-        background: #fff;
-        border: 1px solid var(--line);
-        border-radius: 22px;
-        padding: 1.6rem;
-        height: 100%;
-    }
-
-    .step-num {
-        font-family: var(--font-display);
-        font-weight: 800;
-        font-size: 2.6rem;
-        line-height: 1;
-        color: var(--brand);
-    }
-
-    .cta-band {
-        background: var(--ink);
-        color: #fff;
-        border-radius: 28px;
-        padding: clamp(1.75rem, 4vw, 3.25rem);
-    }
-    .cta-band h2 { color: #fff; font-size: clamp(1.7rem, 3.4vw, 2.5rem); font-weight: 800; }
-    .cta-band p { color: #B8C2DA; }
-</style>
-{% endblock %}
-
 {% block content %}
 
 <!-- Hero -->
@@ -122,12 +16,19 @@
             </p>
 
             <div class="d-flex flex-wrap gap-2 mt-4">
-                {% if user.is_authenticated %}
-                    <a href="{% url 'criar_treino' %}" class="btn btn-light btn-lg">
-                        <i class="bi bi-plus-lg me-2"></i>Novo treino
+                {% if user.perfil_personal %}
+                    <a href="{% url 'painel_personal' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-speedometer2 me-2"></i>Meu painel
                     </a>
-                    <a href="{% url 'lista_treinos' %}" class="btn btn-ghost btn-lg">
-                        Ver meus treinos
+                    <a href="{% url 'listas_exercicios' %}" class="btn btn-ghost btn-lg">
+                        Listas dos alunos
+                    </a>
+                {% elif user.is_authenticated %}
+                    <a href="{% url 'minhas_listas' %}" class="btn btn-light btn-lg">
+                        <i class="bi bi-list-check me-2"></i>Minhas listas
+                    </a>
+                    <a href="{% url 'criar_treino' %}" class="btn btn-ghost btn-lg">
+                        <i class="bi bi-plus-lg me-2"></i>Novo treino
                     </a>
                 {% else %}
                     <a href="{% url 'cadastro' %}" class="btn btn-light btn-lg">
@@ -177,7 +78,7 @@ Tríceps na corda: 3 x 15</div>
 {% if not user.is_authenticated %}
 <!-- Funcionalidades -->
 <section class="section-gap">
-    <div class="mb-4" style="max-width: 36rem;">
+    <div class="mb-4 section-intro">
         <h2 class="section-title">Tudo para manter a rotina em dia</h2>
         <p class="text-secondary fs-5 mb-0">
             Do cadastro à consulta, cada etapa leva poucos cliques.
@@ -189,7 +90,7 @@ Tríceps na corda: 3 x 15</div>
             <div class="feature-main">
                 <span class="tile-icon mb-3"><i class="bi bi-clipboard2-check"></i></span>
                 <h3 class="h4 fw-bold">Cada treino com o que importa</h3>
-                <p class="text-secondary" style="max-width: 44ch;">
+                <p class="text-secondary text-measure-md">
                     Registre objetivo, duração e nível. Use a descrição livre para anotar
                     séries, repetições e observações.
                 </p>
@@ -232,7 +133,7 @@ Tríceps na corda: 3 x 15</div>
         <div class="col-md-4">
             <div class="step-num">1</div>
             <h3 class="h5 fw-bold mt-3">Crie sua conta</h3>
-            <p class="text-secondary mb-0">Escolha um usuário e uma senha para acessar o FitManager.</p>
+            <p class="text-secondary mb-0">Entre como aluno ou como personal. O personal monta turmas e listas para cada aluno.</p>
         </div>
         <div class="col-md-4">
             <div class="step-num">2</div>
@@ -295,7 +196,7 @@ Tríceps na corda: 3 x 15</div>
         <div class="card p-5 text-center">
             <span class="tile-icon mx-auto mb-3"><i class="bi bi-clipboard2-plus"></i></span>
             <h3 class="h5 fw-bold">Nenhum treino cadastrado</h3>
-            <p class="text-secondary mx-auto" style="max-width: 36ch;">
+            <p class="text-secondary mx-auto text-measure">
                 Cadastre o primeiro treino para vê-lo aqui.
             </p>
             <div>

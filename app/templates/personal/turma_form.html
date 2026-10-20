@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titulo }} | FitManager{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8 col-xl-7">
+
+        <a href="{% if turma %}{% url 'detalhe_turma' turma.id %}{% else %}{% url 'lista_turmas' %}{% endif %}" class="back-link">
+            <i class="bi bi-arrow-left"></i>Voltar
+        </a>
+
+        <div class="card p-4 p-md-5">
+            <div class="d-flex align-items-center gap-3 mb-4">
+                <span class="tile-icon"><i class="bi bi-people"></i></span>
+                <div>
+                    <h1 class="h3 fw-bold mb-1">{{ titulo }}</h1>
+                    <p class="text-secondary mb-0">O valor e o vencimento servem de padrão para novos alunos.</p>
+                </div>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+                {% endif %}
+
+                <div class="row g-3">
+                    {% for field in form.visible_fields %}
+                        {% if field.name == 'ativa' %}
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ field }}
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="{% if field.name == 'valor_mensalidade' or field.name == 'dia_vencimento' %}col-md-6{% else %}col-12{% endif %}">
+                                <div class="field-control{% if field.errors %} field-error{% endif %}">
+                                    <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+                                    {% for error in field.errors %}
+                                        <div class="text-danger small mt-1" role="alert">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <div class="d-flex flex-column-reverse flex-sm-row justify-content-sm-end gap-2 mt-4 pt-4 border-top">
+                    <a href="{% if turma %}{% url 'detalhe_turma' turma.id %}{% else %}{% url 'lista_turmas' %}{% endif %}" class="btn btn-outline-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle me-2"></i>Salvar turma
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
